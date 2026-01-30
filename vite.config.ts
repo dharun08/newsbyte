@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.NEXT_PUBLIC_API_KEY': JSON.stringify(env.NEXT_PUBLIC_API_KEY)
-      },
+  'process.env.NEXT_PUBLIC_NEWS_API_KEY': JSON.stringify(env.NEXT_PUBLIC_NEWS_API_KEY)
+}
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
