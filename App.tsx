@@ -1,11 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Message, Sender, MessageOption } from './types';
 import { ChatMessage } from './components/ChatMessage';
-import { GoogleGenAI } from "@google/genai";
 
 // --- Constants ---
-
 const CATEGORIES: MessageOption[] = [
   { text: 'business', value: 'business' },
   { text: 'sports', value: 'sports' },
@@ -16,11 +13,11 @@ const CATEGORIES: MessageOption[] = [
 ];
 
 const REGIONS: MessageOption[] = [
-  { text: 'india', value: 'India' },
-  { text: 'global', value: 'Global' },
+  { text: 'india', value: 'in' },
+  { text: 'global', value: 'us' },
 ];
 
-const WELCOME_MESSAGE_TEXT = `👋 Hi there! I’m your personal news assistant.
+const WELCOME_MESSAGE_TEXT = `👋 Hi there! I'm your personal news assistant.
 What do you want to read today?
 Please choose a category:`;
 
@@ -34,41 +31,39 @@ const COUNTER_API_URL = 'https://api.countapi.xyz';
 const COUNTER_NAMESPACE = 'newsbyte';
 const COUNTER_KEY = 'ai-chatbot-global-usage';
 
-
 interface NewsArticle {
-  headline: string;
-  summary: string;
+  title: string;
+  description: string;
   url: string;
+  urlToImage: string;
+  source: string;
 }
 
 // --- Components ---
-
 const ChatHeader: React.FC<{ totalUses: number | null }> = ({ totalUses }) => (
-    <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
-          🗞️ NewsByte
-        </h1>
-        <div className="flex items-center gap-4">
-            <span className="text-xs text-text-secondary/80">
-                Global bot usage: <span className="font-semibold text-text-secondary">{totalUses ?? '--'}</span>
-            </span>
-        </div>
+  <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
+    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
+      🗞️ NewsByte
+    </h1>
+    <div className="flex items-center gap-4">
+      <span className="text-xs text-text-secondary/80">
+        Global bot usage: <span className="font-semibold text-text-secondary">{totalUses ?? '--'}</span>
+      </span>
     </div>
+  </div>
 );
 
 const TypingIndicator: React.FC = () => (
-    <div className="flex justify-start animate-fade-in">
-      <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
-      </div>
+  <div className="flex justify-start animate-fade-in">
+    <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
+      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
     </div>
+  </div>
 );
 
-
 // --- Main App Component ---
-
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +78,7 @@ const App: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
-  
+
   const addBotMessage = (text: string, options?: MessageOption[]) => {
     const botMessage: Message = { 
       id: Date.now() + Math.random(), 
@@ -93,7 +88,7 @@ const App: React.FC = () => {
     };
     setMessages((prev) => [...prev, botMessage]);
   };
-  
+
   useEffect(() => {
     // Fetch initial global usage count
     const fetchInitialCount = async () => {
@@ -104,7 +99,7 @@ const App: React.FC = () => {
         setTotalUses(data.value ?? 0);
       } catch (error) {
         console.error("Failed to fetch usage count:", error);
-        setTotalUses(0); // Fallback on error
+        setTotalUses(0);
       }
     };
 
@@ -115,71 +110,62 @@ const App: React.FC = () => {
       addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
       setIsLoading(false);
     }, 1000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchAndSummarizeNews = async (category: string, region: string) => {
+  const fetchNews = async (category: string, country: string) => {
     try {
-      console.log("API Key check:", process.env.NEXT_PUBLIC_API_KEY ? "✅ FOUND" : "❌ MISSING");
-      const ai = new GoogleGenAI({apiKey: process.env.NEXT_PUBLIC_API_KEY});
-      const prompt = `You are a world-class news summarization engine. Your task is to find the 3 latest, most important news headlines for the category '${category}' in '${region}'. The news must be from today or yesterday. For each article, you must provide: 1. A concise headline. 2. A crisp 2-3 line summary. 3. The direct URL to the article. Respond ONLY with a single valid JSON array of objects. Each object must have three keys: "headline", "summary", and "url". Your response must start with '[' and end with ']'. Do not include any introductory text, markdown formatting, or explanations.`;
+      console.log('Fetching news:', category, country);
       
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash-8b',
-        contents: prompt,
-        config: {
-          tools: [{googleSearch: {}}],
-        },
-      });
-
-      let responseText = response.text.trim();
-      
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-          throw new Error("No JSON array found in response");
+      const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY;
+      if (!apiKey) {
+        throw new Error('NewsAPI key missing');
       }
-      responseText = jsonMatch[0];
 
-      const newsArticles: NewsArticle[] = JSON.parse(responseText);
+      const response = await fetch(
+        `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&pageSize=3&apiKey=${apiKey}`
+      );
 
-      let formattedNews: string;
+      if (!response.ok) {
+        throw new Error(`NewsAPI error: ${response.status}`);
+      }
 
-      if (newsArticles && newsArticles.length > 0) {
-        // Increment global usage count
-        fetch(`${COUNTER_API_URL}/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.value) {
-              setTotalUses(data.value);
-            }
-          })
-          .catch(error => {
-            console.error("Failed to increment usage count:", error);
-            // Fallback to local increment if API fails
-            setTotalUses(prev => (prev !== null ? prev + 1 : 1));
-          });
+      const data = await response.json();
+      const articles: NewsArticle[] = data.articles || [];
 
-        formattedNews = newsArticles.map(article => {
-          const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(article.headline)}`;
-          const linkHtml = `<a href="${googleSearchUrl}" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline">Read on Google →</a>`;
-          
-          return `<div class="p-4 bg-bubble-user/30 rounded-xl border border-bubble-border/80 hover:border-accent-cyan/50 transition-colors duration-300">
-                    <p class="font-semibold text-text-primary text-base mb-1.5">📰 ${article.headline}</p>
-                    <p class="text-text-secondary text-[15px] mb-2.5">💬 ${article.summary}</p>
-                    <p class="text-sm">🔗 ${linkHtml}</p>
-                  </div>`;
+      if (articles.length === 0) {
+        addBotMessage("😕 No recent news found for that category. Try another!");
+        return;
+      }
 
-        }).join('');
+      // Increment usage counter
+      fetch(`${COUNTER_API_URL}/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`)
+        .then(res => res.json())
+        .then(data => setTotalUses(data.value))
+        .catch(() => setTotalUses(prev => (prev ?? 0) + 1));
+
+      // Format news for your UI
+      const formattedNews = articles.map(article => {
+        const image = article.urlToImage ? `<img src="${article.urlToImage}" alt="News" class="w-full h-32 object-cover rounded-lg mb-2" />` : '';
+        const source = article.source?.name || 'News Source';
         
-      } else {
-         formattedNews = "😕 Sorry, I couldn’t find recent news for that category. Please try another one.";
-      }
-      
+        return `
+          <div class="p-4 bg-bubble-user/30 rounded-xl border border-bubble-border/80 hover:border-accent-cyan/50 transition-colors">
+            ${image}
+            <p class="font-semibold text-text-primary text-base mb-1.5 line-clamp-2">${article.title}</p>
+            <p class="text-text-secondary text-[15px] mb-2.5 line-clamp-3">${article.description}</p>
+            <div class="flex gap-2 text-xs text-text-secondary mb-2">
+              <span>📰 ${source}</span>
+            </div>
+            <a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline text-sm">Read full story →</a>
+          </div>
+        `;
+      }).join('');
+
       addBotMessage(formattedNews);
 
     } catch (error) {
-      console.error("Error fetching or parsing news:", error);
-      addBotMessage("🚧 I’m facing a small technical issue fetching news. Please try again later.");
+      console.error("News fetch error:", error);
+      addBotMessage("🚧 Sorry, couldn't fetch news right now. Please try again later!");
     } finally {
       setSelectedCategory(null);
       setTimeout(() => {
@@ -200,7 +186,7 @@ const App: React.FC = () => {
         addBotMessage(REGION_MESSAGE_TEXT, REGIONS);
         setIsLoading(false);
       } else {
-        fetchAndSummarizeNews(selectedCategory, value);
+        fetchNews(selectedCategory, value);
       }
     }, 800);
   };
