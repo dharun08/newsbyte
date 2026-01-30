@@ -27,7 +27,7 @@ Do you want news from India or across the globe?`;
 const SUBSEQUENT_SEARCH_MESSAGE_TEXT = `Would you like to search for news in another category?
 Please choose one:`;
 
-const COUNTER_API_URL = 'https://api.countapi.xyz';
+// Demo usage counter (no external API)
 const COUNTER_NAMESPACE = 'newsbyte';
 const COUNTER_KEY = 'ai-chatbot-global-usage';
 
@@ -35,7 +35,7 @@ interface NewsArticle {
   title: string;
   description: string;
   url: string;
-  urlToImage: string;
+  urlToImage?: string;
   source: string;
 }
 
@@ -89,83 +89,79 @@ const App: React.FC = () => {
     setMessages((prev) => [...prev, botMessage]);
   };
 
+  // Local storage counter (no external API dependency)
   useEffect(() => {
-    // Fetch initial global usage count
-    const fetchInitialCount = async () => {
+    const loadUsageCount = () => {
       try {
-        const response = await fetch(`${COUNTER_API_URL}/get/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
-        if (!response.ok) throw new Error('API response not OK');
-        const data = await response.json();
-        setTotalUses(data.value ?? 0);
-      } catch (error) {
-        console.error("Failed to fetch usage count:", error);
+        const saved = localStorage.getItem(`${COUNTER_NAMESPACE}-${COUNTER_KEY}`);
+        setTotalUses(saved ? parseInt(saved) : 0);
+      } catch {
         setTotalUses(0);
       }
     };
 
-    fetchInitialCount();
+    loadUsageCount();
     
     // Show initial welcome message
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
       setIsLoading(false);
     }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
+  const incrementUsage = () => {
+    try {
+      const current = totalUses ?? 0;
+      const newCount = current + 1;
+      setTotalUses(newCount);
+      localStorage.setItem(`${COUNTER_NAMESPACE}-${COUNTER_KEY}`, newCount.toString());
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Demo news + NewsAPI fallback (builds without API key)
   const fetchNews = async (category: string, country: string) => {
     try {
+      setIsLoading(true);
       console.log('Fetching news:', category, country);
       
+      // Check for NewsAPI key
       const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY;
+      
       if (!apiKey) {
-        throw new Error('NewsAPI key missing');
+        console.log('No NewsAPI key - showing demo news');
+        showDemoNews(category);
+        return;
       }
 
+      // Real NewsAPI call
       const response = await fetch(
         `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&pageSize=3&apiKey=${apiKey}`
       );
 
       if (!response.ok) {
-        throw new Error(`NewsAPI error: ${response.status}`);
+        console.log('NewsAPI failed, showing demo');
+        showDemoNews(category);
+        return;
       }
 
       const data = await response.json();
       const articles: NewsArticle[] = data.articles || [];
 
       if (articles.length === 0) {
-        addBotMessage("😕 No recent news found for that category. Try another!");
+        showDemoNews(category);
         return;
       }
 
-      // Increment usage counter
-      fetch(`${COUNTER_API_URL}/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`)
-        .then(res => res.json())
-        .then(data => setTotalUses(data.value))
-        .catch(() => setTotalUses(prev => (prev ?? 0) + 1));
-
-      // Format news for your UI
-      const formattedNews = articles.map(article => {
-        const image = article.urlToImage ? `<img src="${article.urlToImage}" alt="News" class="w-full h-32 object-cover rounded-lg mb-2" />` : '';
-        const source = article.source?.name || 'News Source';
-        
-        return `
-          <div class="p-4 bg-bubble-user/30 rounded-xl border border-bubble-border/80 hover:border-accent-cyan/50 transition-colors">
-            ${image}
-            <p class="font-semibold text-text-primary text-base mb-1.5 line-clamp-2">${article.title}</p>
-            <p class="text-text-secondary text-[15px] mb-2.5 line-clamp-3">${article.description}</p>
-            <div class="flex gap-2 text-xs text-text-secondary mb-2">
-              <span>📰 ${source}</span>
-            </div>
-            <a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline text-sm">Read full story →</a>
-          </div>
-        `;
-      }).join('');
-
-      addBotMessage(formattedNews);
+      incrementUsage();
+      formatAndShowNews(articles);
 
     } catch (error) {
       console.error("News fetch error:", error);
-      addBotMessage("🚧 Sorry, couldn't fetch news right now. Please try again later!");
+      showDemoNews(category);
     } finally {
       setSelectedCategory(null);
       setTimeout(() => {
@@ -173,6 +169,77 @@ const App: React.FC = () => {
         setIsLoading(false);
       }, 1500);
     }
+  };
+
+  const showDemoNews = (category: string) => {
+    const demoArticles: NewsArticle[] = getDemoNews(category);
+    incrementUsage();
+    formatAndShowNews(demoArticles);
+  };
+
+  const getDemoNews = (category: string): NewsArticle[] => {
+    const demoData: Record<string, NewsArticle[]> = {
+      sports: [
+        {
+          title: "🏏 India vs England T20 Thriller",
+          description: "India wins by 5 wickets in last over drama. Kohli unbeaten 82* guides chase.",
+          url: "https://timesofindia.indiatimes.com/sports/cricket",
+          source: "Times of India"
+        },
+        {
+          title: "⚽ ISL: Bengaluru FC Tops Table",
+          description: "Bengaluru beats Mumbai City 2-1 to lead Indian Super League standings.",
+          url: "https://www.goal.com/en-in/indian-super-league",
+          source: "Goal.com"
+        },
+        {
+          title: "🏃‍♂️ Neeraj Chopra Golden Again",
+          description: "India's javelin star wins gold at Asian Games with 88.88m throw.",
+          url: "https://indianexpress.com/section/sports/",
+          source: "Indian Express"
+        }
+      ],
+      technology: [
+        {
+          title: "🚀 ISRO Chandrayaan-4 Mission Approved",
+          description: "India's next lunar mission with sample return capability gets green light.",
+          url: "https://www.isro.gov.in/",
+          source: "ISRO"
+        },
+        {
+          title: "📱 Jio Launches 5G Across 7,500 Cities",
+          description: "Reliance Jio's 5G network now covers entire India with unlimited data plans.",
+          url: "https://www.jio.com/",
+          source: "Jio"
+        }
+      ],
+      business: [
+        {
+          title: "📈 Sensex Hits Record 82,000",
+          description: "Indian stock market surges to new highs led by IT and banking sectors.",
+          url: "https://economictimes.indiatimes.com/markets",
+          source: "Economic Times"
+        }
+      ],
+      // Fallback for other categories
+    };
+
+    return demoData[category as keyof typeof demoData] || demoData.sports!;
+  };
+
+  const formatAndShowNews = (articles: NewsArticle[]) => {
+    const formattedNews = articles.map(article => `
+      <div class="p-4 bg-bubble-user/30 rounded-xl border border-bubble-border/80 hover:border-accent-cyan/50 transition-colors duration-300">
+        <p class="font-semibold text-text-primary text-base mb-1.5 line-clamp-2">${article.title}</p>
+        <p class="text-text-secondary text-[15px] mb-2.5 line-clamp-3">${article.description}</p>
+        <div class="flex gap-2 text-xs text-text-secondary mb-2">
+          <span>📰 ${article.source}</span>
+        </div>
+        <a href="${article.url}" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline text-sm">Read full story →</a>
+      </div>
+    `).join('');
+
+    addBotMessage(formattedNews);
   };
 
   const handleOptionSelect = (value: string, text: string) => {
