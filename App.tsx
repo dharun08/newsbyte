@@ -146,6 +146,7 @@ const fetchNews = async (category: string, country: string) => {
         return;
       }
   }
+}
       incrementUsage();
       formatAndShowNews(articles);
 
