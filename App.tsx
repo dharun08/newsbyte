@@ -123,13 +123,16 @@ const App: React.FC = () => {
   };
 
   // Server-side proxy + NewsAPI + Demo fallback
-  const fetchNews = async (category: string, country: string) => {
-    try {
-      setIsLoading(true);
-      console.log('Fetching news via proxy:', category, country);
-      
-      // Server-side proxy call (bypasses 426 CORS error)
-      const response = await fetch(`/api/news?country=${country}&category=${category}`);
+  // Replace ONLY this function in your App.tsx:
+const fetchNews = async (category: string, country: string) => {
+  try {
+    setIsLoading(true);
+    console.log('Fetching news via GNews API:', category, country);
+    
+    // GNews API - Works in browser + free CORS
+    const response = await fetch(
+      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=your-gnews-token-here`
+    );
       
       if (!response.ok) {
         console.log('Proxy failed, showing demo');
