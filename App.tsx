@@ -120,6 +120,7 @@ const App: React.FC = () => {
 
   const fetchAndSummarizeNews = async (category: string, region: string) => {
     try {
+      console.log("API Key check:", process.env.NEXT_PUBLIC_API_KEY ? "✅ FOUND" : "❌ MISSING");
       const ai = new GoogleGenAI({apiKey: process.env.NEXT_PUBLIC_API_KEY});
       const prompt = `You are a world-class news summarization engine. Your task is to find the 3 latest, most important news headlines for the category '${category}' in '${region}'. The news must be from today or yesterday. For each article, you must provide: 1. A concise headline. 2. A crisp 2-3 line summary. 3. The direct URL to the article. Respond ONLY with a single valid JSON array of objects. Each object must have three keys: "headline", "summary", and "url". Your response must start with '[' and end with ']'. Do not include any introductory text, markdown formatting, or explanations.`;
       
