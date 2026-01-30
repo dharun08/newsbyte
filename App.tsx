@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Message, Sender, MessageOption } from './types';
 import { ChatMessage } from './components/ChatMessage';
@@ -42,22 +43,15 @@ interface NewsArticle {
 
 // --- Components ---
 
-const ChatHeader: React.FC<{ onClear: () => void; totalUses: number | null }> = ({ onClear, totalUses }) => (
+const ChatHeader: React.FC<{ totalUses: number | null }> = ({ totalUses }) => (
     <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
         <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
           🗞️ NewsByte
         </h1>
         <div className="flex items-center gap-4">
-            <span className="text-xs text-text-secondary/80 hidden sm:inline">
+            <span className="text-xs text-text-secondary/80">
                 Global bot usage: <span className="font-semibold text-text-secondary">{totalUses ?? '--'}</span>
             </span>
-            <button
-              onClick={onClear}
-              className="text-xs font-medium text-text-secondary hover:text-text-primary bg-button-bg px-3 py-1.5 rounded-full border border-bubble-border hover:border-accent-cyan/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-cyan/50"
-              aria-label="Clear chat"
-            >
-              Clear
-            </button>
         </div>
     </div>
 );
@@ -130,7 +124,7 @@ const App: React.FC = () => {
       const prompt = `You are a world-class news summarization engine. Your task is to find the 3 latest, most important news headlines for the category '${category}' in '${region}'. The news must be from today or yesterday. For each article, you must provide: 1. A concise headline. 2. A crisp 2-3 line summary. 3. The direct URL to the article. Respond ONLY with a single valid JSON array of objects. Each object must have three keys: "headline", "summary", and "url". Your response must start with '[' and end with ']'. Do not include any introductory text, markdown formatting, or explanations.`;
       
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           tools: [{googleSearch: {}}],
@@ -194,16 +188,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleClearChat = () => {
-    setIsLoading(true);
-    setMessages([]);
-    setSelectedCategory(null);
-    setTimeout(() => {
-      addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
-      setIsLoading(false);
-    }, 500);
-  };
-
   const handleOptionSelect = (value: string, text: string) => {
     const userMessage: Message = { id: Date.now(), text, sender: Sender.USER };
     setMessages((prev) => [...prev, userMessage]);
@@ -223,7 +207,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col h-screen font-sans bg-brand-darker">
       <div className="w-full max-w-2xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
-        <ChatHeader onClear={handleClearChat} totalUses={totalUses} />
+        <ChatHeader totalUses={totalUses} />
         <div className="flex-grow p-4 overflow-y-auto space-y-4">
           {messages.map((msg, index) => (
             <ChatMessage 
