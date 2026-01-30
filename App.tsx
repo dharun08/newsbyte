@@ -122,28 +122,17 @@ const App: React.FC = () => {
     }
   };
 
-  // Demo news + NewsAPI fallback (builds without API key)
+  // Server-side proxy + NewsAPI + Demo fallback
   const fetchNews = async (category: string, country: string) => {
     try {
       setIsLoading(true);
-      console.log('Fetching news:', category, country);
+      console.log('Fetching news via proxy:', category, country);
       
-      // Check for NewsAPI key
-      const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY;
+      // Server-side proxy call (bypasses 426 CORS error)
+      const response = await fetch(`/api/news?country=${country}&category=${category}`);
       
-      if (!apiKey) {
-        console.log('No NewsAPI key - showing demo news');
-        showDemoNews(category);
-        return;
-      }
-
-      // Real NewsAPI call
-      const response = await fetch(
-        `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&pageSize=3&apiKey=${apiKey}`
-      );
-
       if (!response.ok) {
-        console.log('NewsAPI failed, showing demo');
+        console.log('Proxy failed, showing demo');
         showDemoNews(category);
         return;
       }
@@ -152,6 +141,7 @@ const App: React.FC = () => {
       const articles: NewsArticle[] = data.articles || [];
 
       if (articles.length === 0) {
+        console.log('No articles from API, showing demo');
         showDemoNews(category);
         return;
       }
@@ -211,6 +201,12 @@ const App: React.FC = () => {
           description: "Reliance Jio's 5G network now covers entire India with unlimited data plans.",
           url: "https://www.jio.com/",
           source: "Jio"
+        },
+        {
+          title: "💻 India Overtakes Japan in Tech Exports",
+          description: "India becomes 3rd largest tech exporter surpassing Japan.",
+          url: "https://www.thehindu.com/business/",
+          source: "The Hindu"
         }
       ],
       business: [
@@ -219,9 +215,44 @@ const App: React.FC = () => {
           description: "Indian stock market surges to new highs led by IT and banking sectors.",
           url: "https://economictimes.indiatimes.com/markets",
           source: "Economic Times"
+        },
+        {
+          title: "💰 Adani Group Acquires Major Stake",
+          description: "Adani Enterprises makes strategic acquisition in renewable energy sector.",
+          url: "https://www.business-standard.com/",
+          source: "Business Standard"
+        },
+        {
+          title: "🏦 RBI Cuts Repo Rate by 25bps",
+          description: "Reserve Bank signals more rate cuts to boost economic growth.",
+          url: "https://www.rbi.org.in/",
+          source: "RBI"
         }
       ],
-      // Fallback for other categories
+      politics: [
+        {
+          title: "🏛️ PM Modi Addresses Nation",
+          description: "Prime Minister announces major infrastructure development plan.",
+          url: "https://www.pmindia.gov.in/",
+          source: "PMO India"
+        }
+      ],
+      entertainment: [
+        {
+          title: "🎬 Ranbir Kapoor's Next Blockbuster",
+          description: "Animal sequel confirmed with major star cast announced.",
+          url: "https://timesofindia.indiatimes.com/entertainment",
+          source: "Times of India"
+        }
+      ],
+      health: [
+        {
+          title: "🩺 Ayushman Bharat Reaches 50 Cr",
+          description: "India's health insurance scheme achieves major milestone.",
+          url: "https://www.mohfw.gov.in/",
+          source: "Health Ministry"
+        }
+      ]
     };
 
     return demoData[category as keyof typeof demoData] || demoData.sports!;
