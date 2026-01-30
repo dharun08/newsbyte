@@ -1,0 +1,5 @@
+{
+  "name": "NewsByte",
+  "description": "A simulator for a WhatsApp chatbot that delivers the top 3 daily news headlines for selected categories like Business, Tech, and Future.",
+  "requestFramePermissions": []
+}
