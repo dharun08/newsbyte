@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     define: {
-      'process.env.NEXT_PUBLIC_NEWS_API_KEY': JSON.stringify(env.NEXT_PUBLIC_NEWS_API_KEY)
+      // Server-side env var (not exposed to browser)
+      'process.env.NEWS_API_KEY': JSON.stringify(env.NEWS_API_KEY)
     },
     resolve: {
       alias: {
