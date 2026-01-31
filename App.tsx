@@ -187,10 +187,21 @@ const App: React.FC = () => {
   const formatAndShowNews = (articles: NewsArticle[]) => {
   let newsText = "📰 <strong>LATEST NEWS:</strong><br/><br/>";
   articles.forEach((article, index) => {
+    // Encode URL and text for sharing
+    const shareUrl = encodeURIComponent(article.url);
+    const shareText = encodeURIComponent(article.title);
+    
     newsText += `<strong>${index + 1}. ${article.title}</strong><br/>`;
     newsText += `${article.description}<br/>`;
     newsText += `📍 <em>${article.source}</em><br/>`;
-    newsText += `🔗 <a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">Read more</a><br/><br/>`;
+    newsText += `<a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">🔗 Read more</a><br/>`;
+    
+    // Share buttons
+    newsText += `<div style="margin-top: 8px; margin-bottom: 12px;">`;
+    newsText += `<a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-right: 10px; padding: 6px 12px; background-color: #000000; color: white; border-radius: 6px; text-decoration: none; font-size: 13px;">Share on 𝕏</a>`;
+    newsText += `<a href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 12px; background-color: #25D366; color: white; border-radius: 6px; text-decoration: none; font-size: 13px;">Share on WhatsApp</a>`;
+    newsText += `</div>`;
+    newsText += `<br/>`;
   });
   addBotMessage(newsText);
 };
