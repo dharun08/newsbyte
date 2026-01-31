@@ -59,7 +59,7 @@ const ChatFooter: React.FC = () => (
         rel="noopener noreferrer"
         className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
       >
-        Your Name
+        Dharun Kumar
       </a>
       {' '}• Powered by GNews API
     </p>
