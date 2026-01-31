@@ -1,23 +1,45 @@
-// api/news/route.ts
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const country = searchParams.get('country') || 'in';
-    const category = searchParams.get('category') || 'general';
-    
-    const apiKey = process.env.NEWS_API_KEY;
-    if (!apiKey) {
-      return Response.json({ error: 'API key missing' }, { status: 500 });
-    }
+export const config = {
+  runtime: 'edge',
+};
 
-    const response = await fetch(
-      `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&pageSize=3&apiKey=${apiKey}`
+export default async function handler(req: Request) {
+  // Enable CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json',
+  };
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
+  }
+
+  // Get query parameters from URL
+  const url = new URL(req.url);
+  const category = url.searchParams.get('category') || 'sports';
+  const country = url.searchParams.get('country') || 'in';
+  const apiKey = process.env.GNEWS_API_KEY;
+
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: 'API key not configured' }),
+      { status: 500, headers }
     );
+  }
 
+  try {
+    const response = await fetch(
+      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=${apiKey}`
+    );
     const data = await response.json();
     
-    return Response.json(data);
+    return new Response(JSON.stringify(data), { status: 200, headers });
   } catch (error) {
-    return Response.json({ error: 'Failed to fetch news' }, { status: 500 });
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch news' }),
+      { status: 500, headers }
+    );
   }
 }
