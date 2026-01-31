@@ -57,3 +57,5 @@ const TypingIndicator: React.FC = () => (
     <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
       <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.3s]"></span>
       <span className="h-2
+
+      
