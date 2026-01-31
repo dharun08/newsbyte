@@ -49,6 +49,22 @@ const ChatHeader: React.FC<{ totalUses: number | null }> = ({ totalUses }) => (
     </div>
   </div>
 );
+const ChatFooter: React.FC = () => (
+  <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
+    <p className="text-xs text-text-secondary/80">
+      Built with ❤️ by{' '}
+      
+        href="https://www.linkedin.com/in/dharunkumar08/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
+      >
+        Your Name
+      </a>
+      {' '}• Powered by GNews API
+    </p>
+  </div>
+);
 
 const TypingIndicator: React.FC = () => (
   <div className="flex justify-start animate-fade-in">
@@ -229,25 +245,25 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen font-sans bg-brand-darker">
-      <div className="w-full max-w-2xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
-        <ChatHeader totalUses={totalUses} />
-        <div className="flex-grow p-4 overflow-y-auto space-y-4">
-          {messages.map((msg, index) => (
-            <ChatMessage 
-              key={msg.id} 
-              message={msg}
-              onOptionSelect={handleOptionSelect}
-              isLastMessage={index === messages.length - 1}
-              disabled={isLoading}
-            />
-          ))}
-          {isLoading && <TypingIndicator />}
-          <div ref={messagesEndRef} />
-        </div>
+  <div className="flex flex-col h-screen font-sans bg-brand-darker">
+    <div className="w-full max-w-2xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
+      <ChatHeader totalUses={totalUses} />
+      <div className="flex-grow p-4 overflow-y-auto space-y-4">
+        {messages.map((msg, index) => (
+          <ChatMessage 
+            key={msg.id} 
+            message={msg}
+            onOptionSelect={handleOptionSelect}
+            isLastMessage={index === messages.length - 1}
+            disabled={isLoading}
+          />
+        ))}
+        {isLoading && <TypingIndicator />}
+        <div ref={messagesEndRef} />
       </div>
+      <ChatFooter />
     </div>
-  );
-};
+  </div>
+);
 
 export default App;
