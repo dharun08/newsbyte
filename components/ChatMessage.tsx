@@ -66,7 +66,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 ),
                 a: ({ href, children }) => (
                   
-                    href={href}
+                    href={href || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-accent-blue hover:text-accent-cyan underline transition-colors inline-flex items-center gap-1 font-medium"
