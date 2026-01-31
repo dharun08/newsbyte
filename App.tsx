@@ -117,24 +117,21 @@ const App: React.FC = () => {
   const fetchNews = async (category: string, country: string) => {
   try {
     setIsLoading(true);
-    console.log('Fetching GNews:', category, country);
+    console.log('Fetching news:', category, country);
     
-    const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
-    if (!apiKey) {
-      showDemoNews(category);
-      return;
-    }
-
+    // Call our Vercel serverless function instead of GNews directly
     const response = await fetch(
-      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=${apiKey}`
+      `/api/news?category=${category}&country=${country}`
     );
     
     if (!response.ok) {
+      console.error('API response not OK:', response.status);
       showDemoNews(category);
       return;
     }
 
     const data = await response.json();
+    
     // GNews format fix
     const articles: NewsArticle[] = (data.articles || []).map((item: any) => ({
       title: item.title,
