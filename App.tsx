@@ -127,21 +127,21 @@ const App: React.FC = () => {
 const fetchNews = async (category: string, country: string) => {
   try {
     setIsLoading(true);
-    console.log('Fetching news via GNews API:', category, country);
+    console.log('Fetching GNews:', category, country);
     
-    // GNews API - Works in browser + free CORS
+    const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
     const response = await fetch(
-      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=your-gnews-token-here`
+      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=${apiKey}`
     );
-      
-      if (!response.ok) {
-        console.log('Proxy failed, showing demo');
-        showDemoNews(category);
-        return;
-      }
+    
+    if (!response.ok) {
+      console.log('GNews failed, demo news');
+      showDemoNews(category);
+      return;
+    }
 
-      const data = await response.json();
-      const articles: NewsArticle[] = data.articles || [];
+    const data = await response.json();
+    const articles: NewsArticle[] = data.articles || [];
 
       if (articles.length === 0) {
         console.log('No articles from API, showing demo');
