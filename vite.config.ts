@@ -14,6 +14,9 @@ export default defineConfig(({ mode }) => {
       // Server-side env var (not exposed to browser)
       'process.env.NEWS_API_KEY': JSON.stringify(env.NEWS_API_KEY)
     },
+    define: {
+  'process.env.NEXT_PUBLIC_GNEWS_API_KEY': JSON.stringify(env.NEXT_PUBLIC_GNEWS_API_KEY)
+},
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
