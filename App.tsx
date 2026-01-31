@@ -185,15 +185,15 @@ const App: React.FC = () => {
   };
 
   const formatAndShowNews = (articles: NewsArticle[]) => {
-    let newsText = "📰 **LATEST NEWS:**\n\n";
-    articles.forEach((article, index) => {
-      newsText += `${index + 1}. **${article.title}**\n`;
-      newsText += `${article.description}\n`;
-      newsText += `📍 *${article.source}*\n`;
-      newsText += `🔗 [Read more](${article.url})\n\n`;
-    });
-    addBotMessage(newsText);
-  };
+  let newsText = "📰 <strong>LATEST NEWS:</strong><br/><br/>";
+  articles.forEach((article, index) => {
+    newsText += `<strong>${index + 1}. ${article.title}</strong><br/>`;
+    newsText += `${article.description}<br/>`;
+    newsText += `📍 <em>${article.source}</em><br/>`;
+    newsText += `🔗 <a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">Read more</a><br/><br/>`;
+  });
+  addBotMessage(newsText);
+};
 
   const handleOptionSelect = (value: string, text: string) => {
     const userMessage: Message = { id: Date.now(), text, sender: Sender.USER };
