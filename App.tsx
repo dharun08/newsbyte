@@ -191,6 +191,11 @@ const App: React.FC = () => {
     const shareUrl = encodeURIComponent(article.url);
     const shareText = encodeURIComponent(article.title);
     
+    // Add image if available
+    if (article.image) {
+      newsText += `<img src="${article.image}" alt="${article.title}" style="width: 100%; max-width: 500px; border-radius: 12px; margin-bottom: 12px;" onerror="this.style.display='none'"/><br/>`;
+    }
+    
     newsText += `<strong>${index + 1}. ${article.title}</strong><br/>`;
     newsText += `${article.description}<br/>`;
     newsText += `📍 <em>${article.source}</em><br/>`;
