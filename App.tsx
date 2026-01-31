@@ -54,16 +54,19 @@ const ChatHeader: React.FC<{ totalUses: number | null }> = ({ totalUses }) => (
 const ChatFooter: React.FC = () => (
   <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
     <p className="text-xs text-text-secondary/80">
-      Built by{' '}
+      Built with GNews API • Crafted by{' '}
+      <a
         href="https://www.linkedin.com/in/dharunkumar08/"
         target="_blank"
         rel="noopener noreferrer"
         className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
+      >
         Dharun Kumar
-       {' | Powered by GNews API'}
+      </a>
     </p>
   </div>
 );
+
 
 const TypingIndicator: React.FC = () => (
   <div className="flex justify-start animate-fade-in">
