@@ -115,50 +115,53 @@ const App: React.FC = () => {
   };
 
   const fetchNews = async (category: string, country: string) => {
-    try {
-      setIsLoading(true);
-      console.log('Fetching GNews:', category, country);
-      
-      const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
-      if (!apiKey) {
-        console.log('No GNews key - demo news');
-        showDemoNews(category);
-        return;
-      }
-
-      const response = await fetch(
-        `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=${apiKey}`
-      );
-      
-      if (!response.ok) {
-        console.log('GNews failed, demo news');
-        showDemoNews(category);
-        return;
-      }
-
-      const data = await response.json();
-      const articles: NewsArticle[] = data.articles || [];
-
-      if (articles.length === 0) {
-        console.log('No articles from GNews, demo news');
-        showDemoNews(category);
-        return;
-      }
-
-      incrementUsage();
-      formatAndShowNews(articles);
-
-    } catch (error) {
-      console.error("News fetch error:", error);
+  try {
+    setIsLoading(true);
+    console.log('Fetching GNews:', category, country);
+    
+    const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY;
+    if (!apiKey) {
       showDemoNews(category);
-    } finally {
-      setSelectedCategory(null);
-      setTimeout(() => {
-        addBotMessage(SUBSEQUENT_SEARCH_MESSAGE_TEXT, CATEGORIES);
-        setIsLoading(false);
-      }, 1500);
+      return;
     }
-  };
+
+    const response = await fetch(
+      `https://gnews.io/api/v4/search?q=${category}&country=${country}&max=3&lang=en&token=${apiKey}`
+    );
+    
+    if (!response.ok) {
+      showDemoNews(category);
+      return;
+    }
+
+    const data = await response.json();
+    // GNews format fix
+    const articles: NewsArticle[] = (data.articles || []).map((item: any) => ({
+      title: item.title,
+      description: item.description,
+      url: item.url,
+      source: item.source?.name || 'Unknown'
+    })).filter(Boolean);
+
+    if (articles.length === 0) {
+      showDemoNews(category);
+      return;
+    }
+
+    incrementUsage();
+    formatAndShowNews(articles);
+
+  } catch (error) {
+    console.error("News fetch error:", error);
+    showDemoNews(category);
+  } finally {
+    setSelectedCategory(null);
+    setTimeout(() => {
+      addBotMessage(SUBSEQUENT_SEARCH_MESSAGE_TEXT, CATEGORIES);
+      setIsLoading(false);
+    }, 1500);
+  }
+};
 
   const showDemoNews = (category: string) => {
     const demoArticles: NewsArticle[] = getDemoNews(category);
