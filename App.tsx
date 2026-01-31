@@ -134,11 +134,12 @@ const App: React.FC = () => {
     
     // GNews format fix
     const articles: NewsArticle[] = (data.articles || []).map((item: any) => ({
-      title: item.title,
-      description: item.description,
-      url: item.url,
-      source: item.source?.name || 'Unknown'
-    })).filter(Boolean);
+  title: item.title,
+  description: item.description,
+  url: item.url,
+  source: item.source?.name || 'Unknown',
+  image: item.image || item.urlToImage  // Add image field
+})).filter(Boolean);
 
     if (articles.length === 0) {
       showDemoNews(category);
