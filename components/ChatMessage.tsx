@@ -45,7 +45,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     : 'bg-bubble-bot text-text-primary self-start';
   
   const containerClasses = isUser ? 'flex flex-col items-end' : 'flex flex-col items-start';
-  const isNewsSummary = message.sender === Sender.BOT && message.text.includes('📰 LATEST NEWS:');
+  const isNewsSummary = message.sender === Sender.BOT && message.text.includes('<strong>LATEST NEWS:</strong>');
   
   return (
     <div className={`${containerClasses} animate-fade-in`}>
