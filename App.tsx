@@ -36,39 +36,46 @@ interface NewsArticle {
   image?: string;
 }
 
-const ChatHeader: React.FC = () => (
-  <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
-    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
-      🗞️ NewsByte
-    </h1>
-    );
-
-const ChatFooter: React.FC = () => (
-  <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
-    <p className="text-xs text-text-secondary/80">
-      Built by{' '}
-      Built with GNews API • Crafted by{' '}
-      <a
-        href="https://www.linkedin.com/in/dharunkumar08/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
-      >
-        Dharun Kumar
-       </a>
-      </p>
-  </div>
-);
-
-const TypingIndicator: React.FC = () => (
-  <div className="flex justify-start animate-fade-in">
-    <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
-      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-      <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
+const ChatHeader: React.FC = () => {
+  return (
+    <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
+      <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
+        🗞️ NewsByte
+      </h1>
     </div>
-  </div>
-);
+  );
+};
+
+const ChatFooter: React.FC = () => {
+  return (
+    <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
+      <p className="text-xs text-text-secondary/80">
+        Built with GNews API • Crafted by{' '}
+        <a
+          href="https://www.linkedin.com/in/dharunkumar08/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
+        >
+          Dharun Kumar
+        </a>
+      </p>
+    </div>
+  );
+};
+
+const TypingIndicator: React.FC = () => {
+  return (
+    <div className="flex justify-start animate-fade-in">
+      <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
+        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
+        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
+        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
+      </div>
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
