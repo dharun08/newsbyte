@@ -27,9 +27,6 @@ Do you want news from India or across the globe?`;
 const SUBSEQUENT_SEARCH_MESSAGE_TEXT = `Would you like to search for news in another category?
 Please choose one:`;
 
-const COUNTER_NAMESPACE = 'newsbyte';
-const COUNTER_KEY = 'ai-chatbot-global-usage';
-
 interface NewsArticle {
   title: string;
   description: string;
@@ -39,18 +36,12 @@ interface NewsArticle {
   image?: string;
 }
 
-const ChatHeader: React.FC<{ totalUses: number | null }> = ({ totalUses }) => (
+const ChatHeader: React.FC = () => (
   <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
     <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
       🗞️ NewsByte
     </h1>
-    <div className="flex items-center gap-4">
-      <span className="text-xs text-text-secondary/80">
-        Global bot usage: <span className="font-semibold text-text-secondary">{totalUses ?? '--'}</span>
-      </span>
-    </div>
-  </div>
-);
+    );
 
 const ChatFooter: React.FC = () => (
   <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
@@ -83,7 +74,6 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [totalUses, setTotalUses] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -105,38 +95,14 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const loadUsageCount = async () => {
-      try {
-        const response = await fetch('/api/counter');
-        const data = await response.json();
-        setTotalUses(data.count || 0);
-      } catch {
-        setTotalUses(0);
-      }
-    };
+  const timer = setTimeout(() => {
+    addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
+    setIsLoading(false);
+  }, 1000);
 
-    loadUsageCount();
+  return () => clearTimeout(timer);
+}, []);
     
-    const timer = setTimeout(() => {
-      addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const incrementUsage = async () => {
-    try {
-      const response = await fetch('/api/counter', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      setTotalUses(data.count);
-    } catch (error) {
-      console.error('Failed to increment counter:', error);
-    }
-  };
-
   const fetchNews = async (category: string, country: string) => {
     try {
       setIsLoading(true);
@@ -169,8 +135,7 @@ const App: React.FC = () => {
         return;
       }
 
-      incrementUsage();
-      formatAndShowNews(articles);
+     formatAndShowNews(articles);
 
     } catch (error) {
       console.error("News fetch error:", error);
@@ -186,7 +151,6 @@ const App: React.FC = () => {
 
   const showDemoNews = (category: string) => {
     const demoArticles: NewsArticle[] = getDemoNews(category);
-    incrementUsage();
     formatAndShowNews(demoArticles);
   };
 
@@ -291,7 +255,7 @@ const App: React.FC = () => {
     <>
       <div className="flex flex-col h-screen font-sans bg-brand-darker">
         <div className="w-full max-w-2xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
-          <ChatHeader totalUses={totalUses} />
+          <ChatHeader />
           <div className="flex-grow p-4 overflow-y-auto space-y-4">
             {messages.map((msg, index) => (
               <ChatMessage 
