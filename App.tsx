@@ -55,7 +55,7 @@ const ChatFooter: React.FC = () => (
   <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
     <p className="text-xs text-text-secondary/80">
       Built with GNews API • Crafted by{' '}
-      <a
+      
         href="https://www.linkedin.com/in/dharunkumar08/"
         target="_blank"
         rel="noopener noreferrer"
@@ -66,7 +66,6 @@ const ChatFooter: React.FC = () => (
     </p>
   </div>
 );
-
 
 const TypingIndicator: React.FC = () => (
   <div className="flex justify-start animate-fade-in">
@@ -104,38 +103,37 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    useEffect(() => {
-  const loadUsageCount = async () => {
-    try {
-      const response = await fetch('/api/counter');
-      const data = await response.json();
-      setTotalUses(data.count || 0);
-    } catch {
-      setTotalUses(0);
-    }
-  };
+    const loadUsageCount = async () => {
+      try {
+        const response = await fetch('/api/counter');
+        const data = await response.json();
+        setTotalUses(data.count || 0);
+      } catch {
+        setTotalUses(0);
+      }
+    };
 
-  loadUsageCount();
-  
-  const timer = setTimeout(() => {
-    addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
-    setIsLoading(false);
-  }, 1000);
+    loadUsageCount();
+    
+    const timer = setTimeout(() => {
+      addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
+      setIsLoading(false);
+    }, 1000);
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   const incrementUsage = async () => {
-  try {
-    const response = await fetch('/api/counter', {
-      method: 'POST',
-    });
-    const data = await response.json();
-    setTotalUses(data.count);
-  } catch (error) {
-    console.error('Failed to increment counter:', error);
-  }
-};
+    try {
+      const response = await fetch('/api/counter', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      setTotalUses(data.count);
+    } catch (error) {
+      console.error('Failed to increment counter:', error);
+    }
+  };
 
   const fetchNews = async (category: string, country: string) => {
     try {
