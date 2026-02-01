@@ -63,9 +63,9 @@ const ChatFooter: React.FC = () => (
         className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
       >
         Dharun Kumar
-       {' | Powered by GNews API'}
-      </a>
-    </p>
+       </a>
+        {' | Powered by GNews API'}
+      </p>
   </div>
 );
 
