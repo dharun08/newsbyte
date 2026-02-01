@@ -64,7 +64,6 @@ const ChatFooter: React.FC = () => (
       >
         Dharun Kumar
        </a>
-        {' | Powered by GNews API'}
       </p>
   </div>
 );
