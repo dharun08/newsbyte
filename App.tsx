@@ -104,33 +104,38 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const loadUsageCount = () => {
-      try {
-        const saved = localStorage.getItem(`${COUNTER_NAMESPACE}-${COUNTER_KEY}`);
-        setTotalUses(saved ? parseInt(saved) : 0);
-      } catch {
-        setTotalUses(0);
-      }
-    };
-
-    loadUsageCount();
-    
-    const timer = setTimeout(() => {
-      addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const incrementUsage = () => {
+    useEffect(() => {
+  const loadUsageCount = async () => {
     try {
-      const current = totalUses ?? 0;
-      const newCount = current + 1;
-      setTotalUses(newCount);
-      localStorage.setItem(`${COUNTER_NAMESPACE}-${COUNTER_KEY}`, newCount.toString());
-    } catch {}
+      const response = await fetch('/api/counter');
+      const data = await response.json();
+      setTotalUses(data.count || 0);
+    } catch {
+      setTotalUses(0);
+    }
   };
+
+  loadUsageCount();
+  
+  const timer = setTimeout(() => {
+    addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
+    setIsLoading(false);
+  }, 1000);
+
+  return () => clearTimeout(timer);
+}, []);
+
+  const incrementUsage = async () => {
+  try {
+    const response = await fetch('/api/counter', {
+      method: 'POST',
+    });
+    const data = await response.json();
+    setTotalUses(data.count);
+  } catch (error) {
+    console.error('Failed to increment counter:', error);
+  }
+};
 
   const fetchNews = async (category: string, country: string) => {
     try {
