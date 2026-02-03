@@ -91,3 +91,40 @@ export const HEALTH_KEYWORDS = [
 "nutrition","diet","exercise","fitness",
 "wellness","lifestyle disease"
 ];
+
+export const INDIA_KEYWORDS = [
+
+/* Country & Identity */
+"india","indian","bharat","hindustan","republic of india",
+
+/* Major Cities */
+"delhi","new delhi","mumbai","bombay","chennai","madras", "bengaluru","bangalore","hyderabad","secunderabad", "kolkata","calcutta","pune","ahmedabad","surat","vadodara",
+"rajkot","jaipur","jodhpur","udaipur", "kochi","cochin","trivandrum","thiruvananthapuram", "kozhikode","thrissur","kannur", "coimbatore","madurai","tiruchirappalli","salem","erode","vellore",
+"tiruppur","hosur", "vijayawada","guntur","nellore","kurnool","tirupati","vizag","visakhapatnam", "warangal","karimnagar","nizamabad", "bhopal","indore","ujjain","gwalior","jabalpur",
+"lucknow","kanpur","noida","greater noida","ghaziabad", "meerut","varanasi","prayagraj","allahabad","agra", "patna","gaya","muzaffarpur", "ranchi","jamshedpur","bokaro",
+"raipur","bilaspur", "bhubaneswar","cuttack","puri","rourkela", "guwahati","dibrugarh","silchar", "shillong","imphal","aizawl","kohima","itanagar", "gangtok", "dehradun","haridwar","roorkee",
+"shimla","manali","dharamshala", "amritsar","ludhiana","jalandhar","patiala", "chandigarh","panchkula","mohali", "srinagar","jammu","leh", "kargil", "panaji","margao","vasco da gama",
+"port blair", "silvassa","daman","diu",
+
+/* States & UTs */
+"andhra pradesh","arunachal pradesh","assam","bihar","chhattisgarh", "goa","gujarat","haryana","himachal pradesh","jharkhand", "karnataka","kerala","madhya pradesh","maharashtra","manipur",
+"meghalaya","mizoram","nagaland","odisha","orissa", "punjab","rajasthan","sikkim","tamil nadu","telangana", "tripura","uttar pradesh","uttarakhand","west bengal", "ladakh","jammu and kashmir","delhi ncr",
+
+/* Government & Institutions */
+"government of india","goi","central government", "prime minister","pm modi","narendra modi", "president of india","draupadi murmu", "home ministry","finance ministry","defence ministry",
+"ministry of health","ministry of railways", "parliament","lok sabha","rajya sabha", "supreme court","high court", "niti aayog", "rbi","reserve bank of india","sebi","irda","pfrda",
+"npcI","upi","aadhaar","uidai", "isro","drdo","csir","barc",
+
+/* Major Indian Companies & Brands */
+"tata","reliance","adani","birla","mahindra","l&t","infosys","wipro", "hcl","tcs","tech mahindra", "flipkart","myntra","paytm","phonepe","bharatpe", "ola","uber india","swiggy","zomato",
+"byju's","unacademy", "air india","indigo","spicejet","vistara", "sbi","hdfc","icici","axis bank","kotak", "bharti airtel","jio","vi","vodafone idea", 
+  
+/* Sports India Context */
+"bcci","ipl","indian premier league", "team india","indian cricket team", "aiff","isl","indian super league", "pkl","pro kabaddi league",
+
+/* Geography & Cultural */
+"ganges","yamuna","brahmaputra", "himalayas","deccan","thar desert", "south india","north india","east india","west india","northeast india",
+
+/* Currency */
+"inr","rupee","rupees","₹"
+];
