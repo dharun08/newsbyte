@@ -4,6 +4,15 @@ import { NewsArticle } from './types';
 import { NewsCard } from './components/NewsCard';
 import { TabNavigation } from './components/TabNavigation';
 import { RegionToggle } from './components/RegionToggle';
+import {
+  SPORTS_KEYWORDS,
+  BUSINESS_KEYWORDS,
+  TECH_KEYWORDS,
+  POLITICS_KEYWORDS,
+  ENTERTAINMENT_KEYWORDS,
+  HEALTH_KEYWORDS,
+  INDIA_KEYWORDS
+} from "./libraryKeywords";
 
 const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -68,11 +77,10 @@ function hardFilterArticles(
   region: string
 ) {
   const now = Date.now();
-  const MAX_AGE = 48 * 60 * 60 * 1000; // 48 hours
+  const MAX_AGE = 48 * 60 * 60 * 1000;
 
   return articles.filter(a => {
     const text = (a.title + " " + a.description).toLowerCase();
-
     const fresh = a.publishedAt && (now - a.publishedAt < MAX_AGE);
 
     const matchesRegion =
@@ -80,17 +88,35 @@ function hardFilterArticles(
         ? INDIA_KEYWORDS.some(k => text.includes(k))
         : true;
 
-    let matchesCategory = true;
+    let keywordSet: string[] = [];
 
-    if (category === "sports") {
-      matchesCategory = SPORTS_KEYWORDS.some(k => text.includes(k));
+    switch (category) {
+      case "sports":
+        keywordSet = SPORTS_KEYWORDS;
+        break;
+      case "business":
+        keywordSet = BUSINESS_KEYWORDS;
+        break;
+      case "technology":
+        keywordSet = TECH_KEYWORDS;
+        break;
+      case "politics":
+        keywordSet = POLITICS_KEYWORDS;
+        break;
+      case "entertainment":
+        keywordSet = ENTERTAINMENT_KEYWORDS;
+        break;
+      case "health":
+        keywordSet = HEALTH_KEYWORDS;
+        break;
+      default:
+        keywordSet = [];
     }
-    if (category === "business") {
-      matchesCategory = BUSINESS_KEYWORDS.some(k => text.includes(k));
-    }
-    if (category === "technology") {
-      matchesCategory = TECH_KEYWORDS.some(k => text.includes(k));
-    }
+
+    // LOOSE gate → only 1 hit needed
+    const matchesCategory =
+      keywordSet.length === 0 ||
+      keywordSet.some(k => text.includes(k));
 
     return fresh && matchesRegion && matchesCategory;
   });
@@ -109,33 +135,38 @@ function deduplicateArticles(list: any[]) {
 function scoreAndSortArticles(list: any[], category: string) {
   const now = Date.now();
 
+  let keywords: string[] = [];
+
+  if (category === "sports") keywords = SPORTS_KEYWORDS;
+  if (category === "business") keywords = BUSINESS_KEYWORDS;
+  if (category === "technology") keywords = TECH_KEYWORDS;
+  if (category === "politics") keywords = POLITICS_KEYWORDS;
+  if (category === "entertainment") keywords = ENTERTAINMENT_KEYWORDS;
+  if (category === "health") keywords = HEALTH_KEYWORDS;
+
   return list
     .map(a => {
       let score = 0;
       const hoursOld = (now - a.publishedAt) / 3600000;
 
-      if (hoursOld < 6) score += 5;
+      // Freshness
+      if (hoursOld < 6) score += 6;
       else if (hoursOld < 12) score += 4;
-      else if (hoursOld < 24) score += 3;
-      else score += 1;
+      else if (hoursOld < 24) score += 2;
 
+      // Content richness
       if (a.title.length > 60) score += 2;
       if (a.description.length > 80) score += 2;
 
+      // Keyword relevance
       const text = (a.title + a.description).toLowerCase();
-
-      let keywords = SPORTS_KEYWORDS;
-      if (category === "business") keywords = BUSINESS_KEYWORDS;
-      if (category === "technology") keywords = TECH_KEYWORDS;
-
       const hits = keywords.filter(k => text.includes(k)).length;
-      score += Math.min(hits, 5);
+      score += Math.min(hits * 2, 10);
 
       return { ...a, score };
     })
     .sort((a, b) => b.score - a.score);
 }
-
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('sports');
