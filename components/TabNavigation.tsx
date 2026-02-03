@@ -20,26 +20,37 @@ const TABS: Tab[] = [
   { id: 'health', label: 'Health', emoji: '🏥' },
 ];
 
-export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
+export const TabNavigation: React.FC<TabNavigationProps> = ({
+  activeTab,
+  onTabChange,
+}) => {
   return (
     <div className="border-b border-bubble-border/30 bg-brand-dark/50">
       <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`
-              px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200
-              ${activeTab === tab.id
-                ? 'bg-accent-cyan text-white shadow-lg shadow-accent-cyan/30'
-                : 'bg-bubble-bot text-text-secondary hover:bg-bubble-border hover:text-text-primary border border-bubble-border'
-              }
-            `}
-          >
-            <span className="mr-1">{tab.emoji}</span>
-            {tab.label}
-          </button>
-        ))}
+
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`
+                px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap
+                transition-colors duration-200
+                ${
+                  isActive
+                    ? 'bg-[#2BB0E6]/15 text-[#2BB0E6] border border-[#2BB0E6]/40'
+                    : 'bg-bubble-bot text-text-secondary border border-bubble-border hover:bg-bubble-border hover:text-text-primary'
+                }
+              `}
+            >
+              <span className="mr-1">{tab.emoji}</span>
+              {tab.label}
+            </button>
+          );
+        })}
+
       </div>
     </div>
   );
