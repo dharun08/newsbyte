@@ -103,6 +103,29 @@ function normalizeArticles(raw: any[]) {
   }));
 }
 
+function containsStrongPolitics(text: string): boolean {
+  const strongPoliticsKeywords = [
+    "election","elections","vote","voting","ballot",
+    "parliament","congress","senate","house of representatives",
+    "prime minister","president","pm","government",
+    "cabinet","ministry","minister",
+    "policy","bill","law","legislation","ordinance",
+    "campaign","rally","manifesto",
+    "opposition","coalition","party",
+    "bjp","congress party","aap","trinamool","dmk","aiadmk",
+    "republican","democrat","labour party","conservative party",
+    "impeachment","resign","resignation",
+    "diplomacy","sanctions","summit","treaty",
+    "foreign minister","defence minister",
+    "geopolitics","geopolitical"
+  ];
+
+  return strongPoliticsKeywords.some(k =>
+    text.includes(k)
+  );
+}
+
+
 function intelligentFilter(
   articles: any[],
   category: string,
