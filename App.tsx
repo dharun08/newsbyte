@@ -32,11 +32,10 @@ const Footer: React.FC = () => (
         href="https://www.linkedin.com/in/dharunkumar08/"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
-      >
+        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors">
         Dharun Kumar
       </a>
-      {' '} | Powered by GNews API
+      {' | Powered by GNews API'}
     </p>
   </div>
 );
