@@ -28,7 +28,7 @@ const Footer: React.FC = () => (
   <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
     <p className="text-xs text-text-secondary/80">
       Built by{' '}
-      
+      <a
         href="https://www.linkedin.com/in/dharunkumar08/"
         target="_blank"
         rel="noopener noreferrer"
