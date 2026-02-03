@@ -10,41 +10,12 @@ import {
   TECH_KEYWORDS,
   POLITICS_KEYWORDS,
   ENTERTAINMENT_KEYWORDS,
-  HEALTH_KEYWORDS,
-  INDIA_KEYWORDS
+  HEALTH_KEYWORDS
 } from "./keywordLibrary";
 
-function countHits(text: string, keywords: string[]) {
-  let count = 0;
-  for (const k of keywords) {
-    if (text.includes(k)) count++;
-  }
-  return count;
-}
-
-function classifyArticle(text: string) {
-  const scores = {
-    sports: countHits(text, SPORTS_KEYWORDS),
-    business: countHits(text, BUSINESS_KEYWORDS),
-    technology: countHits(text, TECH_KEYWORDS),
-    politics: countHits(text, POLITICS_KEYWORDS),
-    health: countHits(text, HEALTH_KEYWORDS),
-    entertainment: countHits(text, ENTERTAINMENT_KEYWORDS)
-  };
-
-  let winner = "unknown";
-  let max = 0;
-
-  for (const key in scores) {
-    if (scores[key as keyof typeof scores] > max) {
-      max = scores[key as keyof typeof scores];
-      winner = key;
-    }
-  }
-
-  return { winner, score: max };
-}
-
+// ----------------------------
+// CONFIG
+// ----------------------------
 
 const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -53,14 +24,18 @@ interface CachedNews {
   timestamp: number;
 }
 
-const Header: React.FC<{ region: 'in' | 'us'; onRegionChange: (region: 'in' | 'us') => void }> = ({ 
-  region, 
-  onRegionChange 
+// ----------------------------
+// UI PARTS
+// ----------------------------
+
+const Header: React.FC<{ region: 'in' | 'us'; onRegionChange: (region: 'in' | 'us') => void }> = ({
+  region,
+  onRegionChange
 }) => (
   <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
     <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#2BB0E6] to-[#1E8FB3]">
-  🗞️ NewsByte
-     </h1>
+      🗞️ NewsByte
+    </h1>
     <RegionToggle region={region} onRegionChange={onRegionChange} />
   </div>
 );
@@ -73,7 +48,8 @@ const Footer: React.FC = () => (
         href="https://www.linkedin.com/in/dharunkumar08/"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors">
+        className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
+      >
         Dharun Kumar
       </a>
       {' | Powered by GNews API'}
@@ -98,86 +74,25 @@ function normalizeArticles(raw: any[]) {
     url: item.url,
     source: item.source?.name || "Unknown",
     image: item.image || item.urlToImage,
-    content: item.content || "",
     publishedAt: new Date(item.publishedAt).getTime()
   }));
 }
 
-function containsStrongPolitics(text: string): boolean {
-  const strongPoliticsKeywords = [
-    "election","elections","vote","voting","ballot",
-    "parliament","congress","senate","house of representatives",
-    "prime minister","president","pm","government",
-    "cabinet","ministry","minister",
-    "policy","bill","law","legislation","ordinance",
-    "campaign","rally","manifesto",
-    "opposition","coalition","party",
-    "bjp","congress party","aap","trinamool","dmk","aiadmk",
-    "republican","democrat","labour party","conservative party",
-    "impeachment","resign","resignation",
-    "diplomacy","sanctions","summit","treaty",
-    "foreign minister","defence minister",
-    "geopolitics","geopolitical"
-  ];
-
-  return strongPoliticsKeywords.some(k =>
-    text.includes(k)
-  );
-}
-
-
-function intelligentFilter(
-  articles: any[],
-  category: string,
-  region: string
-) {
+function basicQualityFilter(list: any[]) {
   const now = Date.now();
-  const MAX_AGE = 48 * 60 * 60 * 1000;
-  const highConfidence: any[] = [];
-  const mediumConfidence: any[] = [];
-  const fallback: any[] = [];
+  const MAX_AGE = 48 * 60 * 60 * 1000; // 48 hours
 
-  for (const a of articles) {
-    const text = (a.title + " " + a.description).toLowerCase();
-
-    // Freshness
-    if (!a.publishedAt || now - a.publishedAt > MAX_AGE) continue;
-
-    // Region
-    if (region === "in") {
-      if (!INDIA_KEYWORDS.some(k => text.includes(k))) continue;
-    }
-
-    // Politics override
-    if (containsStrongPolitics(text)) {
-      if (category !== "politics") continue;
-    }
-
-    const result = classifyArticle(text);
-
-    // High confidence
-    if (result.winner === category && result.score >= 2) {
-      highConfidence.push(a);
-      continue;
-    }
-
-    // Medium confidence
-    if (result.winner === category && result.score === 1) {
-      mediumConfidence.push(a);
-      continue;
-    }
-
-    // Weak but same category mention
-    if (text.includes(category)) {
-      fallback.push(a);
-    }
-  }
-
-  return [...highConfidence, ...mediumConfidence, ...fallback];
+  return list.filter(a => {
+    if (!a.title) return false;
+    if (!a.publishedAt) return false;
+    if (now - a.publishedAt > MAX_AGE) return false;
+    return true;
+  });
 }
 
 function deduplicateArticles(list: any[]) {
   const seen = new Set<string>();
+
   return list.filter(a => {
     const key = a.title.toLowerCase();
     if (seen.has(key)) return false;
@@ -186,7 +101,7 @@ function deduplicateArticles(list: any[]) {
   });
 }
 
-function scoreAndSortArticles(list: any[], category: string) {
+function scoreArticles(list: any[], category: string) {
   const now = Date.now();
 
   let keywords: string[] = [];
@@ -198,29 +113,32 @@ function scoreAndSortArticles(list: any[], category: string) {
   if (category === "entertainment") keywords = ENTERTAINMENT_KEYWORDS;
   if (category === "health") keywords = HEALTH_KEYWORDS;
 
-  return list
-    .map(a => {
-      let score = 0;
-      const hoursOld = (now - a.publishedAt) / 3600000;
+  return list.map(a => {
+    let score = 0;
 
-      // Freshness
-      if (hoursOld < 6) score += 6;
-      else if (hoursOld < 12) score += 4;
-      else if (hoursOld < 24) score += 2;
+    const hoursOld = (now - a.publishedAt) / 3600000;
 
-      // Content richness
-      if (a.title.length > 60) score += 2;
-      if (a.description.length > 80) score += 2;
+    // Freshness
+    if (hoursOld < 6) score += 6;
+    else if (hoursOld < 12) score += 4;
+    else if (hoursOld < 24) score += 2;
 
-      // Keyword relevance
-      const text = (a.title + a.description).toLowerCase();
-      const hits = keywords.filter(k => text.includes(k)).length;
-      score += Math.min(hits * 2, 10);
+    // Title & description richness
+    if (a.title.length > 60) score += 2;
+    if (a.description.length > 80) score += 2;
 
-      return { ...a, score };
-    })
-    .sort((a, b) => b.score - a.score);
+    // Soft keyword relevance
+    const text = (a.title + " " + a.description).toLowerCase();
+    const hits = keywords.filter(k => text.includes(k)).length;
+    score += Math.min(hits * 2, 8);
+
+    return { ...a, score };
+  });
 }
+
+// ----------------------------
+// APP
+// ----------------------------
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('sports');
@@ -229,15 +147,14 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [cache, setCache] = useState<Record<string, CachedNews>>({});
 
-  const getCacheKey = (category: string, country: string) => `${category}-${country}`;
+  const getCacheKey = (category: string, country: string) =>
+    `${category}-${country}`;
 
   const fetchNews = async (category: string, country: string) => {
     const cacheKey = getCacheKey(category, country);
     const cached = cache[cacheKey];
 
-    // Check cache first
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log('Using cached data for', cacheKey);
       setNews(cached.data);
       setIsLoading(false);
       return;
@@ -246,129 +163,55 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/news?category=${category}&country=${country}`);
+      const response = await fetch(
+        `/api/news?category=${category}&country=${country}`
+      );
 
-      if (!response.ok) {
-        throw new Error('API request failed');
-      }
+      if (!response.ok) throw new Error("API failed");
 
       const data = await response.json();
 
       const normalized = normalizeArticles(data.articles || []);
-const filtered = intelligentFilter(normalized, category, country);
-const deduped = deduplicateArticles(filtered);
-const ranked = scoreAndSortArticles(deduped, category);
+      const quality = basicQualityFilter(normalized);
+      const deduped = deduplicateArticles(quality);
+      const scored = scoreArticles(deduped, category);
+      const ranked = scored.sort((a, b) => b.score - a.score);
 
-let articles: NewsArticle[] = ranked.slice(0, 3);
+      let articles: NewsArticle[] = ranked.slice(0, 3);
 
-// Last-resort padding
-if (articles.length < 3) {
-  const extra = normalized.slice(0, 3 - articles.length);
-  articles = [...articles, ...extra];
-}
+      // Safety padding
+      if (articles.length < 3) {
+        const extra = normalized.slice(0, 3 - articles.length);
+        articles = [...articles, ...extra];
+      }
 
-
-      // Update cache
       setCache(prev => ({
         ...prev,
-        [cacheKey]: {
-          data: articles,
-          timestamp: Date.now(),
-        },
+        [cacheKey]: { data: articles, timestamp: Date.now() }
       }));
 
       setNews(articles);
     } catch (error) {
-      console.error('News fetch error:', error);
-      // Show demo news on error
-      setNews(getDemoNews(category));
+      console.error("News fetch error:", error);
+      setNews([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getDemoNews = (category: string): NewsArticle[] => {
-    const demoData: Record<string, NewsArticle[]> = {
-      sports: [
-        {
-          title: '🏏 India vs England T20 Thriller',
-          description: 'India wins by 5 wickets.',
-          url: 'https://timesofindia.indiatimes.com/sports/cricket',
-          source: 'Times of India',
-          image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500',
-        },
-        {
-          title: '⚽ ISL: Bengaluru FC Tops Table',
-          description: 'Bengaluru beats Mumbai City 2-1.',
-          url: 'https://www.goal.com/en-in/indian-super-league',
-          source: 'Goal.com',
-          image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500',
-        },
-        {
-          title: '🏃‍♂️ Neeraj Chopra Golden Again',
-          description: "India's javelin star wins gold.",
-          url: 'https://indianexpress.com/section/sports/',
-          source: 'Indian Express',
-          image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=500',
-        },
-      ],
-      technology: [
-        {
-          title: '🚀 ISRO Chandrayaan-4 Approved',
-          description: "India's next lunar mission.",
-          url: 'https://www.isro.gov.in/',
-          source: 'ISRO',
-          image: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=500',
-        },
-        {
-          title: '📱 Jio 5G Across 7,500 Cities',
-          description: "Reliance Jio's 5G network live.",
-          url: 'https://www.jio.com/',
-          source: 'Jio',
-          image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
-        },
-        {
-          title: '💻 AI Boom Continues',
-          description: 'Tech giants invest billions in AI.',
-          url: 'https://techcrunch.com',
-          source: 'TechCrunch',
-          image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500',
-        },
-      ],
-      business: [
-        {
-          title: '📈 Sensex Hits Record 82,000',
-          description: 'Indian market surges to new highs.',
-          url: 'https://economictimes.indiatimes.com/markets',
-          source: 'Economic Times',
-          image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500',
-        },
-      ],
-    };
-    return demoData[category] || demoData.sports;
-  };
-
-  // Fetch news when tab or region changes
   useEffect(() => {
     fetchNews(activeTab, region);
   }, [activeTab, region]);
 
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-  };
-
-  const handleRegionChange = (newRegion: 'in' | 'us') => {
-    setRegion(newRegion);
-  };
-
-  const regionLabel = region === 'in' ? 'INDIA' : 'GLOBAL';
+  const regionLabel = region === "in" ? "INDIA" : "GLOBAL";
 
   return (
     <>
       <div className="flex flex-col h-screen font-sans bg-brand-darker">
         <div className="w-full max-w-4xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
-          <Header region={region} onRegionChange={handleRegionChange} />
-          <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+
+          <Header region={region} onRegionChange={setRegion} />
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
           <div className="flex-grow p-4 overflow-y-auto">
             <h2 className="text-lg font-bold text-text-primary mb-4">
@@ -383,7 +226,7 @@ if (articles.length < 3) {
               ))
             ) : (
               <p className="text-center text-text-secondary py-10">
-                No news available. Try another category!
+                No news available.
               </p>
             )}
           </div>
