@@ -67,7 +67,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article, index }) => {
         )}
 
         {/* Read More */}
-        <a>
+        <a
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
@@ -77,7 +77,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article, index }) => {
         </a>
 
         {/* Share on X */}
-        <a>
+        <a
           href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -87,7 +87,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article, index }) => {
         </a>
 
         {/* Share on WhatsApp */}
-        <a>
+        <a
           href={`https://wa.me/?text=${shareText}%20${shareUrl}`}
           target="_blank"
           rel="noopener noreferrer"
