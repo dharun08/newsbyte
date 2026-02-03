@@ -14,6 +14,38 @@ import {
   INDIA_KEYWORDS
 } from "./keywordLibrary";
 
+function countHits(text: string, keywords: string[]) {
+  let count = 0;
+  for (const k of keywords) {
+    if (text.includes(k)) count++;
+  }
+  return count;
+}
+
+function classifyArticle(text: string) {
+  const scores = {
+    sports: countHits(text, SPORTS_KEYWORDS),
+    business: countHits(text, BUSINESS_KEYWORDS),
+    technology: countHits(text, TECH_KEYWORDS),
+    politics: countHits(text, POLITICS_KEYWORDS),
+    health: countHits(text, HEALTH_KEYWORDS),
+    entertainment: countHits(text, ENTERTAINMENT_KEYWORDS)
+  };
+
+  let winner = "unknown";
+  let max = 0;
+
+  for (const key in scores) {
+    if (scores[key as keyof typeof scores] > max) {
+      max = scores[key as keyof typeof scores];
+      winner = key;
+    }
+  }
+
+  return { winner, score: max };
+}
+
+
 const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
 interface CachedNews {
@@ -71,47 +103,56 @@ function normalizeArticles(raw: any[]) {
   }));
 }
 
-function hardFilterArticles(
+function intelligentFilter(
   articles: any[],
   category: string,
   region: string
 ) {
   const now = Date.now();
   const MAX_AGE = 48 * 60 * 60 * 1000;
+  const highConfidence: any[] = [];
+  const mediumConfidence: any[] = [];
+  const fallback: any[] = [];
 
-  return articles.filter(a => {
+  for (const a of articles) {
     const text = (a.title + " " + a.description).toLowerCase();
-    const fresh = a.publishedAt && (now - a.publishedAt < MAX_AGE);
 
-    const matchesRegion =
-      region === "in"
-        ? INDIA_KEYWORDS.some(k => text.includes(k))
-        : true;
+    // Freshness
+    if (!a.publishedAt || now - a.publishedAt > MAX_AGE) continue;
 
-    let keywordSet: string[] = [];
-
-    switch (category) {
-      case "sports":
-        keywordSet = SPORTS_KEYWORDS;
-        break;
-      case "business":
-        keywordSet = BUSINESS_KEYWORDS;
-        break;
-      case "technology":
-        keywordSet = TECH_KEYWORDS;
-        break;
-      case "politics":
-        keywordSet = POLITICS_KEYWORDS;
-        break;
-      case "entertainment":
-        keywordSet = ENTERTAINMENT_KEYWORDS;
-        break;
-      case "health":
-        keywordSet = HEALTH_KEYWORDS;
-        break;
-      default:
-        keywordSet = [];
+    // Region
+    if (region === "in") {
+      if (!INDIA_KEYWORDS.some(k => text.includes(k))) continue;
     }
+
+    // Politics override
+    if (containsStrongPolitics(text)) {
+      if (category !== "politics") continue;
+    }
+
+    const result = classifyArticle(text);
+
+    // High confidence
+    if (result.winner === category && result.score >= 2) {
+      highConfidence.push(a);
+      continue;
+    }
+
+    // Medium confidence
+    if (result.winner === category && result.score === 1) {
+      mediumConfidence.push(a);
+      continue;
+    }
+
+    // Weak but same category mention
+    if (text.includes(category)) {
+      fallback.push(a);
+    }
+  }
+
+  return [...highConfidence, ...mediumConfidence, ...fallback];
+}
+
 
     // LOOSE gate → only 1 hit needed
     const matchesCategory =
@@ -201,11 +242,18 @@ const App: React.FC = () => {
       const data = await response.json();
 
       const normalized = normalizeArticles(data.articles || []);
-const filtered = hardFilterArticles(normalized, category, country);
+const filtered = intelligentFilter(normalized, category, country);
 const deduped = deduplicateArticles(filtered);
 const ranked = scoreAndSortArticles(deduped, category);
 
-const articles: NewsArticle[] = ranked.slice(0, 3);
+let articles: NewsArticle[] = ranked.slice(0, 3);
+
+// Last-resort padding
+if (articles.length < 3) {
+  const extra = normalized.slice(0, 3 - articles.length);
+  articles = [...articles, ...extra];
+}
+
 
       // Update cache
       setCache(prev => ({
