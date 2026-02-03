@@ -153,16 +153,6 @@ function intelligentFilter(
   return [...highConfidence, ...mediumConfidence, ...fallback];
 }
 
-
-    // LOOSE gate → only 1 hit needed
-    const matchesCategory =
-      keywordSet.length === 0 ||
-      keywordSet.some(k => text.includes(k));
-
-    return fresh && matchesRegion && matchesCategory;
-  });
-}
-
 function deduplicateArticles(list: any[]) {
   const seen = new Set<string>();
   return list.filter(a => {
