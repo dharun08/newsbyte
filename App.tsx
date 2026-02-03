@@ -17,9 +17,9 @@ const Header: React.FC<{ region: 'in' | 'us'; onRegionChange: (region: 'in' | 'u
   onRegionChange 
 }) => (
   <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
-    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
-      🗞️ NewsByte
-    </h1>
+    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#2BB0E6] to-[#1E8FB3]">
+  🗞️ NewsByte
+     </h1>
     <RegionToggle region={region} onRegionChange={onRegionChange} />
   </div>
 );
@@ -42,7 +42,7 @@ const Footer: React.FC = () => (
 
 const LoadingSpinner: React.FC = () => (
   <div className="flex justify-center items-center py-20">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-cyan"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2BB0E6]"></div>
   </div>
 );
 
