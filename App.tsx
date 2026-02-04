@@ -56,7 +56,7 @@ const Footer: React.FC = () => (
       >
         Dharun Kumar
       </a>
-      <span> | Powered by GNews API</span>
+      <span> | Powered by GNews API | v2.0</span>
     </p>
   </div>
 );
