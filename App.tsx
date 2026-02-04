@@ -1,282 +1,337 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { Message, Sender, MessageOption } from './types';
-import { ChatMessage } from './components/ChatMessage';
+import { NewsArticle } from './types';
+import { NewsCard } from './components/NewsCard';
+import { TabNavigation } from './components/TabNavigation';
+import { RegionToggle } from './components/RegionToggle';
+import {
+  SPORTS_KEYWORDS,
+  BUSINESS_KEYWORDS,
+  TECH_KEYWORDS,
+  POLITICS_KEYWORDS,
+  ENTERTAINMENT_KEYWORDS,
+  HEALTH_KEYWORDS,
+  INDIA_KEYWORDS,
+  US_KEYWORDS,
+  GLOBAL_KEYWORDS,
+  PREMIUM_SOURCES
+} from './keywordLibrary';
 
-const CATEGORIES: MessageOption[] = [
-  { text: 'business', value: 'business' },
-  { text: 'sports', value: 'sports' },
-  { text: 'technology', value: 'technology' },
-  { text: 'politics', value: 'politics' },
-  { text: 'entertainment', value: 'entertainment' },
-  { text: 'health', value: 'health' },
-];
+// ----------------------------
+// CONFIG
+// ----------------------------
 
-const REGIONS: MessageOption[] = [
-  { text: 'india', value: 'in' },
-  { text: 'global', value: 'us' },
-];
+const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
-const WELCOME_MESSAGE_TEXT = `👋 Hi there! I'm your personal news assistant.
-What do you want to read today?
-Please choose a category:`;
-
-const REGION_MESSAGE_TEXT = `Great choice!
-Do you want news from India or across the globe?`;
-
-const SUBSEQUENT_SEARCH_MESSAGE_TEXT = `Would you like to search for news in another category?
-Please choose one:`;
-
-interface NewsArticle {
-  title: string;
-  description: string;
-  url: string;
-  urlToImage?: string;
-  source: string;
-  image?: string;
+interface CachedNews {
+  data: NewsArticle[];
+  timestamp: number;
 }
 
-const ChatHeader: React.FC = () => {
-  return (
-    <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
-      <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-cyan">
-        🗞️ NewsByte
-      </h1>
-    </div>
-  );
-};
+// ----------------------------
+// UI COMPONENTS
+// ----------------------------
 
-const ChatFooter: React.FC = () => {
-  return (
-    <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
-      <p className="text-xs text-text-secondary/80">
-        Built with GNews API • Crafted by{' '}
-        <a
-          href="https://www.linkedin.com/in/dharunkumar08/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-accent-cyan hover:text-accent-blue underline font-medium transition-colors"
-        >
-          Dharun Kumar
-        </a>
-      </p>
-    </div>
-  );
-};
+const Header: React.FC<{
+  region: 'in' | 'us';
+  onRegionChange: (region: 'in' | 'us') => void;
+}> = ({ region, onRegionChange }) => (
+  <div className="p-4 border-b border-bubble-border/30 flex items-center justify-between">
+    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-600">
+      🗞️ NewsByte
+    </h1>
+    <RegionToggle region={region} onRegionChange={onRegionChange} />
+  </div>
+);
 
-const TypingIndicator: React.FC = () => {
-  return (
-    <div className="flex justify-start animate-fade-in">
-      <div className="max-w-md md:max-w-lg rounded-xl px-4 py-4 shadow-md bg-bubble-bot border border-bubble-border self-start flex items-center space-x-2">
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
-        <span className="h-2 w-2 bg-accent-cyan rounded-full animate-bounce"></span>
-      </div>
-    </div>
-  );
-};
+const Footer: React.FC = () => (
+  <div className="p-3 border-t border-bubble-border/30 text-center bg-brand-dark/50">
+    <p className="text-xs text-text-secondary/80">
+      Built by{' '}
+      <a
+        href="https://www.linkedin.com/in/dharunkumar08/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-cyan-400 hover:text-cyan-300 underline font-medium transition-colors"
+      >
+        Dharun Kumar
+      </a>
+      <span> | Powered by GNews API</span>
+    </p>
+  </div>
+);
 
+const LoadingSpinner: React.FC = () => (
+  <div className="flex justify-center items-center py-20">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-600"></div>
+  </div>
+);
+
+// ----------------------------
+// HELPER FUNCTIONS
+// ----------------------------
+
+function getCategoryKeywords(category: string): string[] {
+  const map: Record<string, string[]> = {
+    sports: SPORTS_KEYWORDS,
+    business: BUSINESS_KEYWORDS,
+    technology: TECH_KEYWORDS,
+    politics: POLITICS_KEYWORDS,
+    entertainment: ENTERTAINMENT_KEYWORDS,
+    health: HEALTH_KEYWORDS,
+  };
+  return map[category] || [];
+}
+
+function getRegionKeywords(region: 'in' | 'us'): string[] {
+  if (region === 'in') return INDIA_KEYWORDS;
+  return [...US_KEYWORDS, ...GLOBAL_KEYWORDS];
+}
+
+function countKeywordMatches(text: string, keywords: string[]): number {
+  const lowerText = text.toLowerCase();
+  let matches = 0;
+
+  for (const keyword of keywords) {
+    // Escape special regex characters
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Use word boundary for better matching
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (regex.test(lowerText)) {
+      matches++;
+    }
+  }
+
+  return matches;
+}
+
+// ----------------------------
+// DATA PROCESSING PIPELINE
+// ----------------------------
+
+function normalizeArticles(raw: any[]) {
+  return raw.map((item) => ({
+    title: (item.title || '').trim(),
+    description: (item.description || '').trim(),
+    url: item.url,
+    source: item.source?.name || 'Unknown',
+    image: item.image || item.urlToImage,
+    content: item.content,
+    publishedAt: item.publishedAt ? new Date(item.publishedAt).getTime() : Date.now(),
+  }));
+}
+
+function basicQualityFilter(list: any[]) {
+  const now = Date.now();
+  const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+  return list.filter((a) => {
+    // Must have title (min 20 chars)
+    if (!a.title || a.title.length < 20) return false;
+
+    // Must have description (min 30 chars)
+    if (!a.description || a.description.length < 30) return false;
+
+    // Must have publish date
+    if (!a.publishedAt) return false;
+
+    // Not too old
+    if (now - a.publishedAt > MAX_AGE) return false;
+
+    // Must have valid URL
+    if (!a.url || !a.url.startsWith('http')) return false;
+
+    return true;
+  });
+}
+
+function hardRegionFilter(list: any[], region: 'in' | 'us') {
+  // For global/US, accept all articles
+  if (region === 'us') return list;
+
+  // For India, require at least 1 India keyword
+  const regionKeywords = INDIA_KEYWORDS;
+
+  return list.filter((a) => {
+    const text = (a.title + ' ' + a.description).toLowerCase();
+    const matches = countKeywordMatches(text, regionKeywords);
+    return matches > 0;
+  });
+}
+
+function deduplicateArticles(list: any[]) {
+  const seen = new Set<string>();
+
+  return list.filter((a) => {
+    const key = a.title.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function scoreArticles(list: any[], category: string, region: 'in' | 'us') {
+  const now = Date.now();
+  const categoryKeywords = getCategoryKeywords(category);
+  const regionKeywords = getRegionKeywords(region);
+  const premiumSources = PREMIUM_SOURCES[category as keyof typeof PREMIUM_SOURCES] || [];
+
+  return list.map((a) => {
+    let score = 0;
+    const text = (a.title + ' ' + a.description).toLowerCase();
+    const hoursOld = (now - a.publishedAt) / 3600000;
+
+    // 1. Freshness (max 8 points)
+    if (hoursOld < 2) score += 8;
+    else if (hoursOld < 6) score += 6;
+    else if (hoursOld < 12) score += 4;
+    else if (hoursOld < 24) score += 2;
+
+    // 2. Content quality (max 4 points)
+    if (a.title.length > 50) score += 1;
+    if (a.title.length > 80) score += 1;
+    if (a.description && a.description.length > 100) score += 2;
+
+    // 3. Category relevance (max 12 points)
+    const categoryHits = countKeywordMatches(text, categoryKeywords);
+    score += Math.min(categoryHits * 3, 12);
+
+    // 4. Region relevance (max 20 points) - HIGHEST PRIORITY
+    const regionHits = countKeywordMatches(text, regionKeywords);
+    score += Math.min(regionHits * 4, 20);
+
+    // 5. Premium source bonus (8 points)
+    const isPremium = premiumSources.some((source) =>
+      a.source.toLowerCase().includes(source.toLowerCase())
+    );
+    if (isPremium) score += 8;
+
+    // 6. Has image bonus (3 points)
+    if (a.image) score += 3;
+
+    // 7. Title clarity bonus (2 points)
+    if (a.title.length >= 40 && a.title.length <= 120) score += 2;
+
+    return { ...a, score };
+  });
+}
+
+// ----------------------------
+// MAIN APP
+// ----------------------------
 
 const App: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [activeTab, setActiveTab] = useState('sports');
+  const [region, setRegion] = useState<'in' | 'us'>('in');
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [cache, setCache] = useState<Record<string, CachedNews>>({});
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const getCacheKey = (category: string, country: string) => `${category}-${country}`;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
-
-  const addBotMessage = (text: string, options?: MessageOption[]) => {
-    const botMessage: Message = { 
-      id: Date.now() + Math.random(), 
-      text, 
-      sender: Sender.BOT,
-      options 
-    };
-    setMessages((prev) => [...prev, botMessage]);
-  };
-
-  useEffect(() => {
-  const timer = setTimeout(() => {
-    addBotMessage(WELCOME_MESSAGE_TEXT, CATEGORIES);
-    setIsLoading(false);
-  }, 1000);
-
-  return () => clearTimeout(timer);
-}, []);
-    
   const fetchNews = async (category: string, country: string) => {
+    const cacheKey = getCacheKey(category, country);
+    const cached = cache[cacheKey];
+
+    // Check cache first
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('✅ Using cached data for', cacheKey);
+      setNews(cached.data);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-      console.log('Fetching news:', category, country);
-      
-      // Call our Vercel serverless function instead of GNews directly
-      const response = await fetch(
-        `/api/news?category=${category}&country=${country}`
-      );
-      
+      console.log('🔄 Fetching fresh news for', cacheKey);
+      const response = await fetch(`/api/news?category=${category}&country=${country}`);
+
       if (!response.ok) {
-        console.error('API response not OK:', response.status);
-        showDemoNews(category);
-        return;
+        throw new Error('API request failed');
       }
 
       const data = await response.json();
-      
-      // GNews format fix
-      const articles: NewsArticle[] = (data.articles || []).map((item: any) => ({
-        title: item.title,
-        description: item.description,
-        url: item.url,
-        source: item.source?.name || 'Unknown',
-        image: item.image || item.urlToImage
-      })).filter(Boolean);
 
-      if (articles.length === 0) {
-        showDemoNews(category);
-        return;
+      // PROCESSING PIPELINE
+      const normalized = normalizeArticles(data.articles || []);
+      console.log('📊 Normalized:', normalized.length, 'articles');
+
+      const qualityFiltered = basicQualityFilter(normalized);
+      console.log('✔️ Quality filtered:', qualityFiltered.length, 'articles');
+
+      const regionFiltered = hardRegionFilter(qualityFiltered, country as 'in' | 'us');
+      console.log('🌍 Region filtered:', regionFiltered.length, 'articles');
+
+      const deduped = deduplicateArticles(regionFiltered);
+      console.log('🔍 Deduplicated:', deduped.length, 'articles');
+
+      const scored = scoreArticles(deduped, category, country as 'in' | 'us');
+      const ranked = scored.sort((a, b) => b.score - a.score);
+
+      console.log('🏆 Top 3 scores:', ranked.slice(0, 3).map(a => ({
+        title: a.title.substring(0, 50),
+        score: a.score
+      })));
+
+      let articles: NewsArticle[] = ranked.slice(0, 3);
+
+      // Safety fallback: if less than 3, pad with normalized articles
+      if (articles.length < 3 && normalized.length > 0) {
+        console.log('⚠️ Padding with extra articles');
+        const extra = normalized.slice(0, 3 - articles.length);
+        articles = [...articles, ...extra];
       }
 
-     formatAndShowNews(articles);
+      // Update cache
+      setCache((prev) => ({
+        ...prev,
+        [cacheKey]: {
+          data: articles,
+          timestamp: Date.now(),
+        },
+      }));
 
+      setNews(articles);
     } catch (error) {
-      console.error("News fetch error:", error);
-      showDemoNews(category);
+      console.error('❌ News fetch error:', error);
+      setNews([]);
     } finally {
-      setSelectedCategory(null);
-      setTimeout(() => {
-        addBotMessage(SUBSEQUENT_SEARCH_MESSAGE_TEXT, CATEGORIES);
-        setIsLoading(false);
-      }, 1500);
+      setIsLoading(false);
     }
   };
 
-  const showDemoNews = (category: string) => {
-    const demoArticles: NewsArticle[] = getDemoNews(category);
-    formatAndShowNews(demoArticles);
-  };
+  // Fetch news when tab or region changes
+  useEffect(() => {
+    fetchNews(activeTab, region);
+  }, [activeTab, region]);
 
-  const getDemoNews = (category: string): NewsArticle[] => {
-    const demoData: Record<string, NewsArticle[]> = {
-      sports: [
-        { 
-          title: "🏏 India vs England T20 Thriller", 
-          description: "India wins by 5 wickets.", 
-          url: "https://timesofindia.indiatimes.com/sports/cricket", 
-          source: "Times of India",
-          image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500"
-        },
-        { 
-          title: "⚽ ISL: Bengaluru FC Tops Table", 
-          description: "Bengaluru beats Mumbai City 2-1.", 
-          url: "https://www.goal.com/en-in/indian-super-league", 
-          source: "Goal.com",
-          image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500"
-        },
-        { 
-          title: "🏃‍♂️ Neeraj Chopra Golden Again", 
-          description: "India's javelin star wins gold.", 
-          url: "https://indianexpress.com/section/sports/", 
-          source: "Indian Express",
-          image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=500"
-        }
-      ],
-      technology: [
-        { 
-          title: "🚀 ISRO Chandrayaan-4 Approved", 
-          description: "India's next lunar mission.", 
-          url: "https://www.isro.gov.in/", 
-          source: "ISRO",
-          image: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=500"
-        },
-        { 
-          title: "📱 Jio 5G Across 7,500 Cities", 
-          description: "Reliance Jio's 5G network live.", 
-          url: "https://www.jio.com/", 
-          source: "Jio",
-          image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500"
-        }
-      ],
-      business: [
-        { 
-          title: "📈 Sensex Hits Record 82,000", 
-          description: "Indian market surges to new highs.", 
-          url: "https://economictimes.indiatimes.com/markets", 
-          source: "Economic Times",
-          image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=500"
-        }
-      ]
-    };
-    return demoData[category as keyof typeof demoData] || demoData.sports!;
-  };
+  const regionLabel = region === 'in' ? 'INDIA' : 'GLOBAL';
 
-  const formatAndShowNews = (articles: NewsArticle[]) => {
-    let newsText = "📰 <strong>LATEST NEWS:</strong><br/><br/>";
-    articles.forEach((article, index) => {
-      // Encode URL and text for sharing
-      const shareUrl = encodeURIComponent(article.url);
-      const shareText = encodeURIComponent(article.title);
-      
-      // Add image if available
-      if (article.image) {
-        newsText += `<img src="${article.image}" alt="${article.title}" style="width: 100%; max-width: 500px; border-radius: 12px; margin-bottom: 12px;" onerror="this.style.display='none'"/><br/>`;
-      }
-      
-      newsText += `<strong>${index + 1}. ${article.title}</strong><br/>`;
-      newsText += `${article.description}<br/>`;
-      newsText += `📍 <em>${article.source}</em><br/>`;
-      newsText += `<a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline;">🔗 Read more</a><br/>`;
-      
-      // Share buttons
-      newsText += `<div style="margin-top: 8px; margin-bottom: 12px;">`;
-      newsText += `<a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; margin-right: 10px; padding: 6px 12px; background-color: #000000; color: white; border-radius: 6px; text-decoration: none; font-size: 13px;">Share on 𝕏</a>`;
-      newsText += `<a href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 12px; background-color: #25D366; color: white; border-radius: 6px; text-decoration: none; font-size: 13px;">Share on WhatsApp</a>`;
-      newsText += `</div>`;
-      newsText += `<br/>`;
-    });
-    addBotMessage(newsText);
-  };
-
-  const handleOptionSelect = (value: string, text: string) => {
-    const userMessage: Message = { id: Date.now(), text, sender: Sender.USER };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    setTimeout(() => {
-      if (!selectedCategory) {
-        setSelectedCategory(value);
-        addBotMessage(REGION_MESSAGE_TEXT, REGIONS);
-        setIsLoading(false);
-      } else {
-        fetchNews(selectedCategory, value);
-      }
-    }, 800);
-  };
-
- return (
+  return (
     <>
       <div className="flex flex-col h-screen font-sans bg-brand-darker">
-        <div className="w-full max-w-2xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
-          <ChatHeader />
-          <div className="flex-grow p-4 overflow-y-auto space-y-4">
-            {messages.map((msg, index) => (
-              <ChatMessage 
-                key={msg.id} 
-                message={msg}
-                onOptionSelect={handleOptionSelect}
-                isLastMessage={index === messages.length - 1}
-                disabled={isLoading}
-              />
-            ))}
-            {isLoading && <TypingIndicator />}
-            <div ref={messagesEndRef} />
+        <div className="w-full max-w-4xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
+          <Header region={region} onRegionChange={setRegion} />
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+
+          <div className="flex-grow p-4 overflow-y-auto">
+            <h2 className="text-lg font-bold text-text-primary mb-4">
+              📰 LATEST {activeTab.toUpperCase()} NEWS ({regionLabel})
+            </h2>
+
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : news.length > 0 ? (
+              news.map((article, index) => <NewsCard key={index} article={article} index={index} />)
+            ) : (
+              <p className="text-center text-text-secondary py-10">
+                No news available. Try another category or region!
+              </p>
+            )}
           </div>
-          <ChatFooter />
+
+          <Footer />
         </div>
       </div>
       <Analytics />
