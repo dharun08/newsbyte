@@ -1,5 +1,4 @@
-export default async function handler(req: any, res: any)
- {
+export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -22,14 +21,8 @@ export default async function handler(req: any, res: any)
       `https://gnews.io/api/v4/top-headlines?category=${category}&country=${country}&max=20&lang=en&token=${apiKey}`
     );
 
-    if (!response.ok) {
-      throw new Error(`GNews API error: ${response.status}`);
-    }
-
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
     console.error('News fetch error:', error);
-    res.status(500).json({ error: 'Failed to fetch news' });
-  }
-}
+    res
