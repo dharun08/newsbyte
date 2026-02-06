@@ -1,23 +1,5 @@
 {
-  "name": "newsbyte",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@google/genai": "^1.29.0",
-    "@vercel/analytics": "^1.1.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vercel-build": "cp index.html dist/index.html && cp -r api dist/api && cp -r components dist/components && cp App.tsx dist/App.tsx && cp index.tsx dist/index.tsx && cp types dist/types && cp keywordLibrary.ts dist/keywordLibrary.ts"
   }
 }
