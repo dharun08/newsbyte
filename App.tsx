@@ -4,6 +4,7 @@ import { NewsArticle } from './types';
 import { NewsCard } from './components/NewsCard';
 import { TabNavigation } from './components/TabNavigation';
 import { RegionToggle } from './components/RegionToggle';
+import MarketSnapshot from "./components/MarketSnapshot";
 import {
   SPORTS_KEYWORDS,
   BUSINESS_KEYWORDS,
@@ -313,8 +314,8 @@ const App: React.FC = () => {
       <div className="flex flex-col h-screen font-sans bg-brand-darker">
         <div className="w-full max-w-4xl mx-auto h-full flex flex-col bg-brand-dark/90 backdrop-blur-lg border border-bubble-border/30 shadow-2xl shadow-black/50 sm:rounded-xl my-0 sm:my-4 sm:h-[calc(100%-2rem)]">
           <Header region={region} onRegionChange={setRegion} />
+          <MarketSnapshot />
           <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-
           <div className="flex-grow p-4 overflow-y-auto">
             <h2 className="text-lg font-bold text-text-primary mb-4">
               📰 LATEST {activeTab.toUpperCase()} NEWS ({regionLabel})
