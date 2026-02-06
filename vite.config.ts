@@ -12,7 +12,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     define: {
-      // GNews API key (browser-safe, public)
       'process.env.NEXT_PUBLIC_GNEWS_API_KEY': JSON.stringify(env.NEXT_PUBLIC_GNEWS_API_KEY || ''),
     },
     resolve: {
@@ -23,6 +22,9 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: true,
+      rollupOptions: {
+        input: '/index.html'  // 👈 THIS FIXES IT - tells Vite your entry
+      }
     }
   };
 });
