@@ -3,10 +3,8 @@ let lastFetch = 0;
 
 const CACHE_DURATION = 1000 * 60 * 60 * 12; // 12 hours
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: any, res: any)
+ {
   if (cache && Date.now() - lastFetch < CACHE_DURATION) {
     return res.status(200).json(cache);
   }
