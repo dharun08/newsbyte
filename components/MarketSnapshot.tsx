@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// components/MarketSnapshot.tsx (NEW - add this file)
+'use client';
+import { useState, useEffect } from 'react';
 
 interface MarketAsset {
   symbol: string;
@@ -8,71 +10,66 @@ interface MarketAsset {
   changePercent: number;
 }
 
-interface MarketData {
+interface MarketSnapshot {
   updatedAt: string;
   assets: MarketAsset[];
 }
 
-export const MarketSnapshot: React.FC = () => {
-  const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+export default function MarketSnapshot() {
+  const [data, setData] = useState<MarketSnapshot | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const fetchMarkets = async () => {
-      try {
-        const response = await fetch('/api/markets');
-        
-        if (!response.ok) {
-          throw new Error('Market fetch failed');
-        }
-        
-        const data = await response.json();
-        setMarketData(data);
-        setHasError(false);
-      } catch (error) {
-        console.error('Failed to load markets:', error);
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMarkets();
+    fetch('/api/markets')
+      .then(res => res.json())
+      .then((json: MarketSnapshot) => {
+        setData(json);
+        setLoading(false);
+        setError(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
   }, []);
 
-  // If error or loading, don't show anything (graceful degradation)
-  if (hasError || isLoading || !marketData?.assets?.length) {
-    return null;
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-100 p-3 border-b border-gray-200">
+        <div className="text-center text-sm text-gray-500">Markets loading...</div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return null; // Graceful degradation - news still works
   }
 
   return (
-    <div className="border-b border-bubble-border/30 bg-gray-900/50">
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-6 px-4 py-3 min-w-max">
-          {marketData.assets.map((asset) => {
-            const isPositive = asset.change >= 0;
-            
-            return (
-              <div key={asset.symbol} className="flex items-center gap-2 min-w-fit">
-                <span className="text-xs font-medium text-gray-400">
-                  {asset.name}
-                </span>
-                <span className="text-sm font-semibold text-white">
-                  {asset.price.toLocaleString()}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    isPositive ? 'text-green-500' : 'text-red-500'
-                  }`}
-                >
-                  {isPositive ? '▲' : '▼'} {Math.abs(asset.changePercent).toFixed(2)}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-100 p-3 border-b border-gray-200">
+      <div className="flex overflow-x-auto gap-4 text-xs pb-2">
+        {data.assets.map(asset => (
+          <div key={asset.symbol} className="min-w-[110px] text-center flex-shrink-0">
+            <div className="font-mono font-bold text-xs mb-1">{asset.symbol}</div>
+            <div className="text-gray-600 text-xs mb-1">{asset.name}</div>
+            <div className="font-bold text-lg leading-tight">
+              ${asset.price.toLocaleString()}
+            </div>
+            <div 
+              className={`font-mono text-xs ${
+                asset.change >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {asset.change >= 0 ? '+' : ''}{asset.change.toFixed(2)} (
+              {asset.changePercent >= 0 ? '+' : ''}{asset.changePercent.toFixed(2)}%)
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="text-xs text-gray-500 text-center">
+        Updated: {new Date(data.updatedAt).toLocaleString()}
       </div>
     </div>
   );
-};
+}
