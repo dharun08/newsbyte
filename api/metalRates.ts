@@ -33,6 +33,18 @@ export default async function handler(req: any, res: any) {
 
     const OUNCE_TO_GRAM = 31.1035;
 
+    // PRICE conversion
+const gold24KPerGram = gold.price / OUNCE_TO_GRAM;
+const gold22KPerGram = gold24KPerGram * 0.916;
+
+const silverPerGram = silver.price / OUNCE_TO_GRAM;
+
+// DELTA conversion
+const goldDeltaPerGram = gold.ch / OUNCE_TO_GRAM;
+const goldDelta22KPerGram = goldDeltaPerGram * 0.916;
+
+const silverDeltaPerGram = silver.ch / OUNCE_TO_GRAM;
+
    const goldDeltaPerGram = gold.ch / OUNCE_TO_GRAM;
    const goldDelta22KPerGram = goldDeltaPerGram * 0.916;
 
