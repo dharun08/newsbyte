@@ -18,70 +18,55 @@ interface MetalData {
 
 export default function MarketSnapshot() {
   const [data, setData] = useState<MetalData | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/metalRates")
       .then(res => res.json())
-      .then((json: MetalData) => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+      .then((json: MetalData) => setData(json))
+      .catch(() => {});
   }, []);
-
-  if (loading) {
-    return (
-      <div className="p-3 border-b text-center text-sm">
-        Metals loading...
-      </div>
-    );
-  }
 
   if (!data) return null;
 
   return (
-    <div className="p-4 border-b bg-gray-50 text-sm">
-      <div className="flex flex-wrap gap-8 justify-center">
+    <div className="border-b border-bubble-border/30 bg-brand-dark/60 backdrop-blur px-4 py-2">
+      <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-text-primary">
 
         {/* GOLD */}
-        <div className="text-center">
-          <div className="font-bold text-base mb-1">Gold (per gram)</div>
-          <div>24K: ₹ {data.gold.perGram24K.toLocaleString()}</div>
-          <div>22K: ₹ {data.gold.perGram22K.toLocaleString()}</div>
-          <div
-            className={`text-xs mt-1 ${
-              data.gold.delta >= 0 ? "text-green-600" : "text-red-600"
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-yellow-400">Gold 22K</span>
+          <span>₹ {data.gold.perGram22K.toLocaleString()}</span>
+          <span
+            className={`text-xs ${
+              data.gold.delta >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            {data.gold.delta >= 0 ? "▲" : "▼"}{" "}
-            {data.gold.deltaPercent.toFixed(2)}%
-          </div>
+            {data.gold.delta >= 0 ? "▲" : "▼"} {data.gold.deltaPercent.toFixed(2)}%
+          </span>
         </div>
 
         {/* SILVER */}
-        <div className="text-center">
-          <div className="font-bold text-base mb-1">Silver (per gram)</div>
-          <div>₹ {data.silver.perGram.toLocaleString()}</div>
-          <div
-            className={`text-xs mt-1 ${
-              data.silver.delta >= 0 ? "text-green-600" : "text-red-600"
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-gray-300">Silver</span>
+          <span>₹ {data.silver.perGram.toLocaleString()}</span>
+          <span
+            className={`text-xs ${
+              data.silver.delta >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            {data.silver.delta >= 0 ? "▲" : "▼"}{" "}
-            {data.silver.deltaPercent.toFixed(2)}%
-          </div>
+            {data.silver.delta >= 0 ? "▲" : "▼"} {data.silver.deltaPercent.toFixed(2)}%
+          </span>
+        </div>
+
+        {/* Updated Time */}
+        <div className="text-xs text-text-secondary">
+          {new Date(data.updatedAt).toLocaleTimeString()}
         </div>
       </div>
 
-      <div className="text-xs text-gray-500 mt-3 text-center">
-        Updated: {new Date(data.updatedAt).toLocaleString()}
-      </div>
-
-      <div className="text-[11px] text-gray-500 mt-2 text-center max-w-3xl mx-auto">
-        {data.note}
+      {/* Subtle Note */}
+      <div className="text-[10px] text-text-secondary/60 text-center mt-1">
+        Spot price converted from international market (per troy ounce). 22K = 91.6% purity. Excludes GST & making charges.
       </div>
     </div>
   );
