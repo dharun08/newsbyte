@@ -1,5 +1,6 @@
-{
-  "scripts": {
-    "vercel-build": "vite build && cp -r api dist/api"
-  }
+"scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "vercel-build": "vite build && cp -r api dist/api",
+  "preview": "vite preview"
 }
