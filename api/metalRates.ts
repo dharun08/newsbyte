@@ -28,6 +28,9 @@ export default async function handler(req: any, res: any) {
     const gold = await goldRes.json();
     const silver = await silverRes.json();
 
+    console.log("Gold response:", gold);
+    console.log("Silver response:", silver);
+
     const OUNCE_TO_GRAM = 31.1035;
 
    const goldDeltaPerGram = gold.ch / OUNCE_TO_GRAM;
