@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "vercel-build": "cp index.html dist/index.html && cp -r api dist/api && cp -r components dist/components && cp App.tsx dist/App.tsx && cp index.tsx dist/index.tsx && cp types dist/types && cp keywordLibrary.ts dist/keywordLibrary.ts"
+    "vercel-build": "vite build && cp -r api dist/api"
   }
 }
