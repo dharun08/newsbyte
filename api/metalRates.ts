@@ -33,22 +33,25 @@ export default async function handler(req: any, res: any) {
 
     const OUNCE_TO_GRAM = 31.1035;
 
+    // Validate API structure
+    if (!gold.price || !silver.price) {
+      throw new Error("Invalid GoldAPI response structure");
+    }
+    
     // PRICE conversion
-const gold24KPerGram = gold.price / OUNCE_TO_GRAM;
-const gold22KPerGram = gold24KPerGram * 0.916;
-
-const silverPerGram = silver.price / OUNCE_TO_GRAM;
-
-// DELTA conversion
-const goldDeltaPerGram = gold.ch / OUNCE_TO_GRAM;
-const goldDelta22KPerGram = goldDeltaPerGram * 0.916;
-
-const silverDeltaPerGram = silver.ch / OUNCE_TO_GRAM;
-
-   const goldDeltaPerGram = gold.ch / OUNCE_TO_GRAM;
-   const goldDelta22KPerGram = goldDeltaPerGram * 0.916;
-
-   const silverDeltaPerGram = silver.ch / OUNCE_TO_GRAM;
+    const gold24KPerGram = gold.price / OUNCE_TO_GRAM;
+    const gold22KPerGram = gold24KPerGram * 0.916;
+    
+    const silverPerGram = silver.price / OUNCE_TO_GRAM;
+    
+    // DELTA conversion (fallback to 0 if missing)
+    const goldChange = gold.ch ?? 0;
+    const silverChange = silver.ch ?? 0;
+    
+    const goldDeltaPerGram = goldChange / OUNCE_TO_GRAM;
+    const goldDelta22KPerGram = goldDeltaPerGram * 0.916;
+    
+    const silverDeltaPerGram = silverChange / OUNCE_TO_GRAM;
 
     return res.status(200).json({
       updatedAt: new Date().toISOString(),
