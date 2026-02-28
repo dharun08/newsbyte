@@ -1,59 +1,87 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-interface MarketAsset {
-  symbol: string;
-  name: string;
-  price: number;
-  delta: number;
-  deltaPercent: number;
-}
-
-interface MarketSnapshotData {
-  assets: MarketAsset[];
+interface MetalData {
+  updatedAt: string;
+  gold: {
+    perGram24K: number;
+    perGram22K: number;
+    delta: number;
+    deltaPercent: number;
+  };
+  silver: {
+    perGram: number;
+    delta: number;
+    deltaPercent: number;
+  };
+  note: string;
 }
 
 export default function MarketSnapshot() {
-  const [data, setData] = useState<MarketSnapshotData | null>(null);
+  const [data, setData] = useState<MetalData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch('/api/metalRates')
+    fetch("/api/metalRates")
       .then(res => res.json())
-      .then((json: MarketSnapshotData) => {
+      .then((json: MetalData) => {
         setData(json);
         setLoading(false);
-        setError(false);
       })
       .catch(() => {
-        setError(true);
         setLoading(false);
       });
   }, []);
 
   if (loading) {
     return (
-      <div className="p-3 border-b border-gray-200 text-center text-sm">
-        Markets loading...
+      <div className="p-3 border-b text-center text-sm">
+        Metals loading...
       </div>
     );
   }
 
-  if (error || !data) return null;
+  if (!data) return null;
 
   return (
-    <div className="p-3 border-b border-gray-200 bg-gray-50">
-      <div className="flex gap-6 justify-center text-sm">
-        {data.assets.map(asset => (
-          <div key={asset.symbol} className="text-center">
-            <div className="font-bold">{asset.name}</div>
-            <div>₹ {asset.price.toLocaleString()}</div>
-            <div className={asset.delta >= 0 ? 'text-green-600' : 'text-red-600'}>
-              {asset.delta >= 0 ? '▲' : '▼'} {asset.delta.toFixed(2)} (
-              {asset.deltaPercent.toFixed(2)}%)
-            </div>
+    <div className="p-4 border-b bg-gray-50 text-sm">
+      <div className="flex flex-wrap gap-8 justify-center">
+
+        {/* GOLD */}
+        <div className="text-center">
+          <div className="font-bold text-base mb-1">Gold (per gram)</div>
+          <div>24K: ₹ {data.gold.perGram24K.toLocaleString()}</div>
+          <div>22K: ₹ {data.gold.perGram22K.toLocaleString()}</div>
+          <div
+            className={`text-xs mt-1 ${
+              data.gold.delta >= 0 ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {data.gold.delta >= 0 ? "▲" : "▼"}{" "}
+            {data.gold.deltaPercent.toFixed(2)}%
           </div>
-        ))}
+        </div>
+
+        {/* SILVER */}
+        <div className="text-center">
+          <div className="font-bold text-base mb-1">Silver (per gram)</div>
+          <div>₹ {data.silver.perGram.toLocaleString()}</div>
+          <div
+            className={`text-xs mt-1 ${
+              data.silver.delta >= 0 ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {data.silver.delta >= 0 ? "▲" : "▼"}{" "}
+            {data.silver.deltaPercent.toFixed(2)}%
+          </div>
+        </div>
+      </div>
+
+      <div className="text-xs text-gray-500 mt-3 text-center">
+        Updated: {new Date(data.updatedAt).toLocaleString()}
+      </div>
+
+      <div className="text-[11px] text-gray-500 mt-2 text-center max-w-3xl mx-auto">
+        {data.note}
       </div>
     </div>
   );
