@@ -54,7 +54,7 @@ export default function MarketSnapshot() {
               data.silver.delta >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            ₹ {Math.abs(data.silver.delta)}
+           {data.silver.delta >= 0 ? "▲" : "▼"}  ₹ {Math.abs(data.silver.delta)}
           </span>
         </div>
 
