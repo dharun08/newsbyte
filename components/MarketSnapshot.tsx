@@ -1,5 +1,3 @@
-// components/MarketSnapshot.tsx (NEW - add this file)
-'use client';
 import { useState, useEffect } from 'react';
 
 interface MarketAsset {
