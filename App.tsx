@@ -4,7 +4,7 @@ import { NewsArticle } from './types';
 import { NewsCard } from './components/NewsCard';
 import { TabNavigation } from './components/TabNavigation';
 import { RegionToggle } from './components/RegionToggle';
-import { MarketSnapshot} from "./components/MarketSnapshot";
+import MarketSnapshot from "./components/MarketSnapshot";
 import {
   SPORTS_KEYWORDS,
   BUSINESS_KEYWORDS,
