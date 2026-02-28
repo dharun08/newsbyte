@@ -41,7 +41,7 @@ export default function MarketSnapshot() {
               data.gold.delta >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            {data.gold.delta >= 0 ? "▲" : "▼"} {data.gold.deltaPercent.toFixed(2)}%
+            {data.gold.delta >= 0 ? "▲" : "▼"} ₹ {Math.abs(data.gold.delta)}
           </span>
         </div>
 
@@ -54,7 +54,7 @@ export default function MarketSnapshot() {
               data.silver.delta >= 0 ? "text-green-400" : "text-red-400"
             }`}
           >
-            {data.silver.delta >= 0 ? "▲" : "▼"} {data.silver.deltaPercent.toFixed(2)}%
+            ₹ {Math.abs(data.silver.delta)}
           </span>
         </div>
 
